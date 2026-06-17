@@ -1,0 +1,60 @@
+project:
+  name: "Climbing"
+  version: "0.1.0"
+  description: "个人投研研究与追踪分析系统"
+
+paths:
+  project_root: "${PROJECT_ROOT}"
+  data:
+    raw: "${PROJECT_ROOT}/data/raw"
+    standardized: "${PROJECT_ROOT}/data/standardized"
+    features: "${PROJECT_ROOT}/data/features"
+    reports: "${PROJECT_ROOT}/data/reports"
+    user: "${PROJECT_ROOT}/data/user"
+  docs: "${PROJECT_ROOT}/docs"
+  config: "${PROJECT_ROOT}/config"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
+  file: "${PROJECT_ROOT}/logs/climbing.log"
+
+data_sources:
+  stock_finance_data:
+    enabled: true
+    default_market: "A"
+  yahoo_finance:
+    enabled: true
+  world_bank:
+    enabled: true
+  tianyancha:
+    enabled: true
+  arxiv:
+    enabled: true
+  scholar:
+    enabled: true
+  web_search:
+    enabled: true
+
+update_schedule:
+  daily:
+    time: "15:30"
+    tasks:
+      - "prices"
+      - "announcements"
+      - "portfolio_summary"
+      - "plan_deviation_check"
+  monthly:
+    day: 3
+    tasks:
+      - "macro_report"
+      - "market_temperature"
+
+reports:
+  default_format: "markdown"
+  templates_dir: "${PROJECT_ROOT}/src/report_generation/templates"
+  keep_snapshots: 30
+
+analysis:
+  default_lookback_days: 252
+  risk_free_rate: 0.025

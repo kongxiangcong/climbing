@@ -1,0 +1,76 @@
+# 个股研究评分器（满分 100）
+stock_scorer:
+  weights:
+    fundamental_quality: 30
+    trend_and_expectation: 20
+    valuation: 20
+    technical_behavior: 15
+    risk_exposure: 15
+
+  thresholds:
+    avoid: 40
+    watch: 60
+    plan: 75
+
+  sub_rules:
+    fundamental_quality:
+      roe_avg_3y:
+        weight: 8
+        excellent: 15
+        good: 10
+        poor: 5
+      gross_margin:
+        weight: 7
+        excellent: 30
+        good: 20
+        poor: 10
+      operating_cash_flow_positive:
+        weight: 8
+      debt_to_asset_reasonable:
+        weight: 7
+    valuation:
+      pe_relative:
+        weight: 10
+      pb_relative:
+        weight: 10
+
+# 市场温度评分器（满分 100）
+market_temperature:
+  dimensions:
+    valuation_percentile:
+      weight: 20
+    trading_heat:
+      weight: 20
+    margin_expansion:
+      weight: 15
+    market_breadth:
+      weight: 15
+    volatility_environment:
+      weight: 15
+    liquidity_environment:
+      weight: 15
+
+  labels:
+    cold: 35
+    neutral: 65
+    hot: 85
+
+# 计划偏离评分器
+plan_deviation:
+  levels:
+    slight:
+      score_range: [0, 30]
+      action: "更新说明"
+    moderate:
+      score_range: [30, 60]
+      action: "要求审核"
+    severe:
+      score_range: [60, 100]
+      action: "标记为假设被破坏，要求重新生成分析报告"
+
+  triggers:
+    price_trigger_met: 25
+    trend_reversal: 25
+    earnings_miss: 20
+    announcement_changes_logic: 20
+    position_overweight: 10

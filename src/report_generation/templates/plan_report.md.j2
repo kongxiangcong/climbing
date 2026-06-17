@@ -1,0 +1,38 @@
+# 交易计划跟踪报告：{{ plan.name }}
+
+> 标的：{{ plan.ticker }}  
+> 报告日期：{{ report_date }}  
+> 版本：{{ version }}
+
+---
+
+## 一、计划基本信息
+
+- **计划ID**：{{ plan.plan_id }}
+- **方向**：{{ plan.direction }}
+- **状态**：{{ plan.status.value }}
+- **目标价区间**：{{ plan.target_price_low or 'N/A' }} - {{ plan.target_price_high or 'N/A' }}
+- **仓位上限**：{{ plan.position_limit }}%
+- **风险预算**：{{ plan.risk_budget }}%
+
+## 二、当前偏离评估
+
+- **偏离分数**：{{ deviation.score }} / 100
+- **偏离等级**：{{ deviation.level }}
+- **建议动作**：{{ deviation.action }}
+
+### 触发原因
+
+{% for t in deviation.triggered %}
+- {{ t }}
+{% else %}
+- 暂无触发条件
+{% endfor %}
+
+## 三、最新价格
+
+- **最新价**：{{ latest_price }} 元
+
+## 四、复盘记录
+
+（待补充）

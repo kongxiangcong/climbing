@@ -1,0 +1,45 @@
+模块,数据项,climbing.md声明来源,climbing.md声明方法,实际可用性,实际可用来源,实际可用API,备注
+研报收集系统,公司基本信息,同花顺 iFind,ifind_get_stock_info,✅ 可用,stock_finance_data,stock_finance_data_get_stock_info,可获取：简称、注册资本、控股股东、实控人、主营业务、竞争对手、可比公司、员工数等
+研报收集系统,财务报表（三表）,同花顺 iFind,ifind_get_financial_statements,✅ 可用,stock_finance_data,stock_finance_data_get_financial_statements,支持 balance_sheet/income_statement/cash_flow/all；A股/港股/美股均可
+研报收集系统,业务分部数据,同花顺 iFind,ifind_get_stock_business_segmentation,✅ 可用,stock_finance_data,stock_finance_data_get_stock_business_segmentation,按行业/产品/地区拆分收入、成本、毛利
+研报收集系统,盈利预测,同花顺 iFind,ifind_get_forecast,✅ 可用,stock_finance_data,stock_finance_data_get_forecast,仅支持A股；净利润、营业收入及同比增速一致预期
+研报收集系统,估值/财务指标,同花顺 iFind,ifind_get_stock_financial_index,✅ 可用,stock_finance_data,stock_finance_data_get_stock_financial_index,6大类：资本结构/流动性/效率/盈利能力/成长/现金覆盖
+研报收集系统,股东信息,同花顺 iFind,ifind_get_holder_info,✅ 可用,stock_finance_data,stock_finance_data_get_holder_info,股东名称、持股数量/比例、机构持仓等
+研报收集系统,公司公告,同花顺 iFind,ifind_get_stock_announcement,✅ 可用,stock_finance_data,stock_finance_data_get_stock_announcement,仅A股；公告日期、标题、PDF链接、序号
+研报收集系统,股票信息（主营业务/竞争对手）,同花顺 iFind,ifind_get_stock_info,✅ 可用,stock_finance_data,stock_finance_data_get_stock_info,同上
+研报收集系统,日线行情 OHLCV,同花顺 iFind,ifind_get_price,✅ 可用,stock_finance_data,stock_finance_data_get_price,支持 D/W/M/Q/Y；最多10只标的；最大3年；支持前后复权
+研报收集系统,分钟线行情,同花顺 iFind,ifind_get_price,⚠️ 部分可用,stock_finance_data,stock_finance_data_get_stock_realtime_price,实时/历史分钟K通过 realtime_price / realtime_tech 获取；非独立 minute API
+研报收集系统,周/月线,同花顺 iFind,ifind_get_price,✅ 可用,stock_finance_data,stock_finance_data_get_price,interval=W/M 支持
+研报收集系统,复权价格,同花顺 iFind,ifind_get_price,✅ 可用,stock_finance_data,stock_finance_data_get_price,adjust=forward/backward/none
+研报收集系统,美股行情,Yahoo Finance,get_stock_info/get_historical_stock_prices,✅ 可用,yahoo_finance,get_historical_stock_prices/get_stock_info,支持美股/港股/A股行情
+研报收集系统,行业分类/可比公司,同花顺 iFind,ifind_get_stock_info,✅ 可用,stock_finance_data,stock_finance_data_get_stock_info,comparing_company/competing_company 字段
+研报收集系统,产业链图谱/智能选股,同花顺 iFind + Web搜索,ifind_get_related_stock + web_search,✅ 可用,stock_finance_data,stock_finance_data_get_related_stock,支持概念/行业/地域/财务指标多维筛选
+研报收集系统,行业财务基准,同花顺 iFind,批量拉取同业公司,✅ 可用,stock_finance_data,stock_finance_data_get_stock_financial_index,可循环调用同行业多标的
+研报收集系统,市场份额数据,Web搜索（Omdia/群智/DSCC）,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接API；需通过 WebSearch 搜索第三方行业报告
+研报收集系统,中国宏观经济,World Bank / iFind,world_bank_open_data GDP/CPI,✅ 可用,world_bank_open_data,world_bank_open_data,需先 search_indicators 获取精确指标代码
+研报收集系统,利率/汇率,同花顺 iFind / Web搜索,web_search,⚠️ 间接可用,WebSearch,WebSearch,World Bank 有部分利率/汇率指标；实时利率需 WebSearch
+研报收集系统,行业政策,Web搜索,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接API
+研报收集系统,国际贸易数据,World Bank / Web搜索,web_search,✅ 可用,world_bank_open_data,world_bank_open_data,World Bank 有贸易、进出口等指标
+追踪分析系统,实时价格/涨跌幅,同花顺 iFind,ifind_get_price（最近5日）,✅ 可用,stock_finance_data,stock_finance_data_get_stock_realtime_price,支持 close_summary/open_summary/realtime_price/realtime_tech
+追踪分析系统,主力资金流向/资金流向,同花顺L2 / Web搜索,web_search,❌ 不可用,-,-,当前无同花顺L2权限；WebSearch可间接搜索新闻
+追踪分析系统,融资融券余额,同花顺 iFind,ifind_get_financial_index margin,⚠️ 可能可用,stock_finance_data,stock_finance_data_get_stock_financial_index,需在财务指标中确认是否包含 margin 字段
+追踪分析系统,北向资金持仓,同花顺 iFind,ifind_get_holder_info,⚠️ 待验证,stock_finance_data,stock_finance_data_get_holder_info,holder_info 是否含北向需实测
+追踪分析系统,龙虎榜数据,交易所公告 / Web搜索,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接API
+追踪分析系统,大宗交易,交易所 / Web搜索,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接API
+追踪分析系统,MA/EMA/MACD/KDJ/RSI/布林带/ATR,Python ta-lib / pandas,ipython计算,✅ 可计算,Python（本地）,pandas,需先获取价格数据后用 pandas 计算；realtime_tech 已内置部分指标
+追踪分析系统,成交量分布/VWAP/POC,Python,ipython计算,✅ 可计算,Python（本地）,pandas,基于 price 数据计算
+追踪分析系统,支撑阻力位,Python技术分析,ipython计算,✅ 可计算,Python（本地）,pandas,基于 price 数据计算
+追踪分析系统,新闻舆情,Web搜索,web_search,⚠️ 间接可用,WebSearch/WebFetch,WebSearch/FetchURL,可搜索新闻并抓取网页
+追踪分析系统,社交媒体情绪,Web搜索 / 第三方,web_search,⚠️ 间接可用,WebSearch,WebSearch,股吧/雪球等需搜索后抓取
+追踪分析系统,分析师评级变动,同花顺 iFind / Web搜索,web_search,✅ 可用,yahoo_finance, get_recommendations,Yahoo Finance 提供 recommendations/upgrades_downgrades
+追踪分析系统,ESG评分,Web搜索 / MSCI/万得,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接ESG API
+追踪分析系统,专利数据,Web搜索 / 国家知识产权局,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接专利API；天眼查可查询企业知识产权
+追踪分析系统,供应链动态,Web搜索,web_search,⚠️ 间接可用,WebSearch,WebSearch,无直接API
+交易计划系统,持仓成本/数量/交易记录/可用资金/风险承受度,用户手动输入 / 券商API,用户截图/Excel导入,❌ 不可用,-,-,需用户本地输入或接入券商API，当前环境无此能力
+交易计划系统,买卖五档盘口,同花顺L2 / iFind,iFind高级权限,❌ 不可用,-,-,当前无L2/高级行情权限
+交易计划系统,订单流/逐笔成交,交易所Level 2,需付费数据源,❌ 不可用,-,-,当前无Level 2数据
+交易计划系统,暗池交易/13F,美股特有 / SEC,sec_edgar,❌ 不可用,-,-,SEC EDGAR 数据源未在当前环境列出
+交易计划系统,期权链/隐含波动率,Web搜索 / 交易所,web_search,⚠️ 部分可用,yahoo_finance,get_option_expiration_dates/get_option_chain,仅美股期权链可用；A股权需 WebSearch
+交易计划系统,Beta/相关系数/VaR/最大回撤/夏普比率/行业集中度,Python计算,ipython计算,✅ 可计算,Python（本地）,pandas/numpy,基于持仓+价格数据计算
+学术/企业数据,学术论文,arXiv / Scholar,arxiv / scholar API,✅ 可用,arxiv / scholar,search_papers / scholar_search,可检索相关论文
+学术/企业数据,企业工商/司法/知识产权/关联图谱,天眼查,tianyancha API,✅ 可用,tianyancha,tianyancha_api_call,支持226个API；需先搜索API名称

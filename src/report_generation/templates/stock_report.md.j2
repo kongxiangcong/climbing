@@ -1,0 +1,53 @@
+# {{ security_info.name }}（{{ ticker }}）个股全景分析报告
+
+> 报告日期：{{ report_date }}  
+> 版本：{{ version }}
+
+---
+
+## 一、公司档案
+
+- **证券代码**：{{ ticker }}
+- **公司名称**：{{ security_info.name }}
+- **所属行业**：{{ security_info.industry or '未分类' }}
+- **主营业务**：{{ security_info.business or '待补充' }}
+- **最新收盘价**：{{ latest_price }} 元
+
+## 二、研究评分
+
+**综合得分**：{{ score.total_score }} / {{ score.max_score }}（{{ score.score_pct }}%）
+
+**结论**：{{ score.conclusion }}
+
+### 各维度评分
+
+| 维度 | 得分 | 说明 |
+|------|------|------|
+| 基本面质量 | {{ score.dimensions.fundamental_quality.score }} / {{ score.dimensions.fundamental_quality.max }} | {{ score.dimensions.fundamental_quality.details }} |
+| 趋势与预期差 | {{ score.dimensions.trend_and_expectation.score }} / {{ score.dimensions.trend_and_expectation.max }} | {{ score.dimensions.trend_and_expectation.details }} |
+| 估值吸引力 | {{ score.dimensions.valuation.score }} / {{ score.dimensions.valuation.max }} | {{ score.dimensions.valuation.details }} |
+| 技术面 | {{ score.dimensions.technical_behavior.score }} / {{ score.dimensions.technical_behavior.max }} | {{ score.dimensions.technical_behavior.details }} |
+| 风险暴露 | {{ score.dimensions.risk_exposure.score }} / {{ score.dimensions.risk_exposure.max }} | {{ score.dimensions.risk_exposure.details }} |
+
+## 三、估值摘要
+
+- **PE(TTM)**：{{ valuation.pe.pe_ttm or 'N/A' }}
+- **PB**：{{ valuation.pb.pb or 'N/A' }}
+
+## 四、投资逻辑与风险提示
+
+### 当前假设
+
+（需人工补充）
+
+### 关键催化
+
+（需人工补充）
+
+### 失效条件
+
+（需人工补充）
+
+### 风险提示
+
+本报告仅基于公开数据生成，不构成投资建议。所有结论需结合人工研判。

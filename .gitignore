@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Data (raw user data, reports, large files)
+data/raw/*
+!data/raw/.gitkeep
+data/standardized/*
+!data/standardized/.gitkeep
+data/features/*
+!data/features/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+data/user/*
+!data/user/.gitkeep
+!data/user/*_example.csv
+
+# Verification samples are kept in git by default, but new raw API dumps are ignored
+data/raw/verification/*.csv
+
+# Logs
+*.log
+logs/
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.cache/
+web/*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+config/*.local.yaml

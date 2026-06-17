@@ -1,0 +1,30 @@
+数据源,API名称,测试标的,状态,输出文件,验证说明/样例数据
+stock_finance_data,stock_finance_data_get_stock_info,000725.SZ,✅ 成功,verify_stock_info.csv,公司简称：京东方A；注册资本：37044328064元；控股股东：北京电子控股有限责任公司（2.96%）；实控人：北京市国资委（13.93%）；主营业务：显示器件业务、物联网创新业务、传感业务等
+stock_finance_data,stock_finance_data_get_financial_statements,000725.SZ 2024年报 all,✅ 成功,verify_fs_2024.csv,资产负债表、利润表、现金流量表均返回；总资产4299.78亿元；净利润41.45亿元；经营现金流477.38亿元
+stock_finance_data,stock_finance_data_get_stock_business_segmentation,000725.SZ 2024年报,✅ 成功,verify_segment.csv,显示器件业务占比78.75%（收入1650亿元，毛利率12.76%）；物联网创新业务16.14%；MLED业务4.05%；国内收入占比50.17%，海外49.83%
+stock_finance_data,stock_finance_data_get_forecast,000725.SZ,✅ 成功,verify_forecast.csv,FY1净利润预测83.58亿元；FY2 121.80亿元；FY3 161.93亿元；FY1营收预测2255.08亿元；当前PE_TTM 38.58，PB 1.66
+stock_finance_data,stock_finance_data_get_stock_financial_index,000725.SZ 2024 profitability,✅ 成功,verify_finidx_profit.csv,ROE 4.06%；ROA 1.61%；毛利率15.20%；净利率2.09%；EPS 0.14元；BPS 3.48元
+stock_finance_data,stock_finance_data_get_stock_financial_index,000725.SZ 2024 growth,✅ 成功,verify_finidx_growth.csv,营收同比13.66%；净利润同比1020.73%；经营现金流同比24.64%；总资产同比2.57%
+stock_finance_data,stock_finance_data_get_holder_info,000725.SZ,✅ 成功,verify_holder.csv,第一大股东北京国有资本运营管理有限公司10.97%；机构持股数量105.85亿股（占比29.13%）；基金持股1.02亿股；股东户数100.01万户
+stock_finance_data,stock_finance_data_get_stock_announcement,000725.SZ 2026-05-01至2026-06-17,✅ 成功,verify_announcement.csv,返回36条公告；包括投资者关系活动记录、回购进展、权益分派、股权激励、与康宁合作备忘录等
+stock_finance_data,stock_finance_data_get_price,000725.SZ 2026-05-01至2026-06-17 日线,✅ 成功,verify_price.csv,返回30个交易日OHLCV；5月21日涨停4.69→5月16；6月17日收盘价6.71元，涨幅10%
+stock_finance_data,stock_finance_data_get_stock_realtime_price,000725.SZ close_summary,✅ 成功,verify_realtime.csv,pre_close 6.10；open 6.06；high 6.71；low 6.05；close 6.71；涨幅10%；成交量18.55亿股；成交额1213.43亿元；换手率5.25%
+stock_finance_data,stock_finance_data_get_related_stock,显示面板/显示面板 半导体,❌ 无数据,verify_related.csv / verify_related2.csv,多次尝试均返回 EMPTY_DATA；该智能选股接口对当前关键词无结果，需调整策略或依赖其他方式获取产业链标的
+yahoo_finance,get_stock_info,000725.SZ,✅ 成功,verify_yf_stock_info.csv,英文名BOE Technology Group；市值2485.67亿元；PE_TTM 39.47；PB 1.83；Beta 0.83；分析师评级均值1.78（buy）；目标价均值5.30元
+yahoo_finance,get_historical_stock_prices,000725.SZ 1mo 1d,✅ 成功,verify_yf_price.csv,返回23个交易日OHLCV；含股息和拆股字段；数据与stock_finance_data基本一致
+yahoo_finance,get_financial_statement,000725.SZ income_stmt,✅ 成功,verify_yf_income.csv,返回近5个年度利润表；2024年营收1983.81亿元；净利润53.23亿元；EBITDA 473.71亿元
+yahoo_finance,get_holder_info,000725.SZ major_holders,✅ 成功,verify_yf_holders.csv,内部人持股15.76%；机构持股14.47%；机构流通股持股17.18%；机构数量278家
+yahoo_finance,get_recommendations,000725.SZ all,✅ 成功,verify_yf_recommend.csv,当前0m：strongBuy 3家/buy 4家/hold 2家/sell 0家
+yahoo_finance,get_stock_actions,000725.SZ,✅ 成功,verify_yf_actions.csv,返回2001年至今股息和拆股记录；最近分红2025-06-24每10股派0.5元
+yahoo_finance,get_yahoo_finance_news,000725.SZ,❌ 失败,-,API_CALL_ERROR: TLS connect error；无法通过Yahoo Finance API获取A股新闻
+world_bank_open_data,world_bank_search_indicators,GDP/CPI/inflation/unemployment/trade,✅ 成功,-,成功检索到相关指标代码：NY.GDP.MKTP.CD、FP.CPI.TOTL.ZG、SL.UEM.TOTL.ZS、BN.GSR.GNFS.CD等
+world_bank_open_data,world_bank_open_data,CHN GDP+CPI 2020-2024,✅ 成功,verify_wb_chn.csv,2024年中国GDP 18.74万亿美元；2024年CPI通胀0.22%；2020-2024完整序列返回
+world_bank_open_data,world_bank_open_data,CHN trade 2020-2024,✅ 成功,verify_wb_trade.csv,2024年货物服务贸易净额5390亿美元；贸易占GDP比重37.20%
+tianyancha,tianyancha_api_search,企业基本信息/股东信息/司法风险/知识产权/年报,✅ 成功,-,返回10个可用API接口：企业基本信息、历史股东信息、司法协助、被执行人、开庭公告、法院公告等
+tianyancha,tianyancha_api_call,工商信息-企业基本信息 京东方科技集团股份有限公司,✅ 成功,verify_tyc_basic.csv,企业名称：京东方科技集团股份有限公司；统一社会信用代码：911100001011016602；注册资本：3704432.8064万元；法定代表人：陈炎顺；状态：存续；行业：计算机、通信和其他电子设备制造业
+tianyancha,tianyancha_api_call,工商信息-历史股东信息 京东方科技集团股份有限公司,✅ 成功,verify_tyc_holders.csv,返回10条历史股东记录；包括北京电子控股、北京博大科技、重庆渝资光电、合肥鑫城控股等
+tianyancha,tianyancha_api_call,其他226个API,未全部测试,-,天眼查平台声称支持226个API；已验证基本信息和历史股东可用；知识产权/司法风险等可类似调用但需逐个实测
+arxiv,search_papers,BOE Technology display OLED,✅ 成功,verify_arxiv.csv,返回1篇OLED相关论文（Spin-valley-locked Electroluminescence for CP-OLEDs）；含标题、作者、摘要、分类、PDF链接
+scholar,scholar_search,京东方 显示技术 OLED,✅ 成功,verify_scholar.csv,返回5篇中文论文；涉及OLED技术专利态势、Micro-LED、5G时代显示技术等；部分论文提到京东方
+general,WebSearch,京东方A 000725 最新消息 2026年6月,✅ 成功,-,返回多条新浪财经、东方财富、中财网、叩富网、股吧等网页结果；可用于舆情/公告/新闻追踪
+general,FetchURL,未单独测试,⏸️ 未测试,-,WebSearch结果中的URL可通过FetchURL进一步抓取正文；工具可用但未在本次验证中调用

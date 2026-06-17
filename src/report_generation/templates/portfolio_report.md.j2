@@ -1,0 +1,24 @@
+# 持仓组合报告
+
+> 报告日期：{{ report_date }}  
+> 版本：{{ version }}
+
+---
+
+## 一、持仓概览
+
+| 代码 | 名称 | 持仓数量 | 成本价 | 市值 | 浮盈亏 | 仓位 |
+|------|------|---------|--------|------|--------|------|
+{% for p in positions %}
+| {{ p.ticker }} | {{ p.name or '-' }} | {{ p.quantity }} | {{ p.buy_price }} | {{ p.market_value or '-' }} | {{ p.pnl or '-' }} | {{ p.weight or '-' }}% |
+{% endfor %}
+
+## 二、风险指标
+
+- **VaR(95%)**：{{ risk.var or 'N/A' }}
+- **夏普比率**：{{ risk.sharpe or 'N/A' }}
+- **集中度 TOP1/TOP3/TOP5**：{{ risk.concentration.top1 or 'N/A' }}% / {{ risk.concentration.top3 or 'N/A' }}% / {{ risk.concentration.top5 or 'N/A' }}%
+
+## 三、组合说明
+
+本报告基于用户导入的持仓数据生成，实际交易请以券商系统为准。

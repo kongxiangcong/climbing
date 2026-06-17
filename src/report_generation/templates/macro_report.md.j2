@@ -1,0 +1,42 @@
+# 市场与宏观月报
+
+> 报告日期：{{ report_date }}  
+> 版本：{{ version }}
+
+---
+
+## 一、市场温度
+
+- **温度分数**：{{ temperature.temperature }} / 100
+- **市场状态**：{{ temperature.label }}
+- **核心判断**：{{ temperature.note }}
+
+### 分项贡献
+
+| 维度 | 数值 | 权重 | 贡献 |
+|------|------|------|------|
+{% for name, d in temperature.dimensions.items() %}
+| {{ name }} | {{ d.value }} | {{ d.weight }} | {{ d.contribution | round(2) }} |
+{% endfor %}
+
+## 二、宏观因子
+
+### 增长
+
+（待接入工业增加值、社零、固定资产投资等）
+
+### 通胀
+
+（待接入 CPI/PPI）
+
+### 流动性
+
+（待接入 M2、社融、利率环境）
+
+### 市场结构
+
+（待接入成交额、估值、融资融券、行业轮动）
+
+## 三、结论
+
+本报告为模板版本，后续接入 World Bank、国家统计局、人民银行、交易所数据后自动填充。

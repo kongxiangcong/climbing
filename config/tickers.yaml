@@ -1,0 +1,34 @@
+watchlist:
+  - ticker: "000725.SZ"
+    name: "京东方A"
+    sector: "电子"
+    industry: "显示器件"
+    tags:
+      - "面板"
+      - "OLED"
+      - "半导体显示"
+    note: "核心跟踪标的，用于验证系统数据链路"
+
+  - ticker: "002594.SZ"
+    name: "比亚迪"
+    sector: "汽车"
+    industry: "乘用车"
+    tags:
+      - "新能源汽车"
+      - "整车"
+
+  - ticker: "600519.SH"
+    name: "贵州茅台"
+    sector: "食品饮料"
+    industry: "白酒"
+    tags:
+      - "消费"
+      - "白酒"
+
+indices:
+  - ticker: "000001.SH"
+    name: "上证指数"
+  - ticker: "399001.SZ"
+    name: "深证成指"
+  - ticker: "399006.SZ"
+    name: "创业板指"
