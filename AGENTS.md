@@ -74,3 +74,17 @@ cd web && npm run dev
 - 修改配置时同步更新 `config/settings.yaml` 和 `pyproject.toml`（如新增依赖）
 - 新增数据源时先在 `data_ingestion/` 添加客户端，并在 `data_standardization/` 中添加标准化逻辑
 - 所有分析模型输出使用 Pydantic 模型约束字段
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as local markdown files under `.scratch/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical roles use their default names: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo: read `CONTEXT.md` at the repo root and `docs/adr/` for architectural decisions. See `docs/agents/domain.md`.
