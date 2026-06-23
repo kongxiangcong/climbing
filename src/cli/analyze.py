@@ -11,13 +11,15 @@ import typer
 
 from src.cli.formatting import format_result
 from src.common.equity_report_io import (
-    build_qa_check,
     get_equity_report_dir,
     write_equity_report_files,
 )
+from src.common.equity_researcher_adapter import build_research_snapshot_from_skill_output
 from src.common.logger import get_logger
 from src.common.models import ResearchSnapshot, SourceMetadata, Valuation
+from src.common.research_cache import CacheTier, ResearchCache
 from src.common.skill_runner import run_skill
+from src.common.snapshot_validator import SnapshotValidator
 from src.data_standardization.versioner import generate_version
 from src.report_generation.equity_report import EquityReportGenerator
 
@@ -35,26 +37,24 @@ def _load_fixture(name: str) -> dict[str, Any]:
     return {}
 
 
+def _to_decimal(value: Any) -> Decimal | None:
+    if value is None:
+        return None
+    return Decimal(str(value))
+
+
 def _build_research_snapshot(
     ticker: str,
     version: str,
     fixture: dict[str, Any],
     skill_summary: str | None = None,
 ) -> ResearchSnapshot:
-    """基于 fixture 与可选 skill 输出构造 ResearchSnapshot。"""
+    """基于 fixture 与可选 skill 输出构造 ResearchSnapshot（后向兼容）。"""
     valuation_data = fixture.get("valuation", {}) or {}
     valuation = Valuation(
         method=valuation_data.get("method", "unknown"),
-        value_low=(
-            Decimal(str(valuation_data["value_low"]))
-            if valuation_data.get("value_low") is not None
-            else None
-        ),
-        value_high=(
-            Decimal(str(valuation_data["value_high"]))
-            if valuation_data.get("value_high") is not None
-            else None
-        ),
+        value_low=_to_decimal(valuation_data.get("value_low")),
+        value_high=_to_decimal(valuation_data.get("value_high")),
         assumptions=valuation_data.get("assumptions", []),
     )
     summary = skill_summary or fixture.get("summary", f"{ticker} 个股研报占位")
@@ -68,16 +68,8 @@ def _build_research_snapshot(
         risks=fixture.get("risks", []),
         assumptions=fixture.get("assumptions", []),
         invalidation_conditions=fixture.get("invalidation_conditions", []),
-        target_price_low=(
-            Decimal(str(fixture["target_price_low"]))
-            if fixture.get("target_price_low") is not None
-            else None
-        ),
-        target_price_high=(
-            Decimal(str(fixture["target_price_high"]))
-            if fixture.get("target_price_high") is not None
-            else None
-        ),
+        target_price_low=_to_decimal(fixture.get("target_price_low")),
+        target_price_high=_to_decimal(fixture.get("target_price_high")),
         pdf_path=None,
         references=fixture.get("references", []),
         metadata=SourceMetadata(
@@ -85,6 +77,102 @@ def _build_research_snapshot(
             retrieved_at=datetime.now(),
             version="1.0.0",
         ),
+    )
+
+
+def _build_minor_refresh_snapshot(
+    existing: ResearchSnapshot,
+    ticker: str,
+    version: str,
+    fixture: dict[str, Any],
+) -> ResearchSnapshot:
+    """基于已有快照生成轻量数据刷新快照：更新版本、时间与价格/估值字段。"""
+    data = existing.model_dump(mode="json")
+    data["snapshot_id"] = f"research-{ticker}-{version}"
+    data["version"] = version
+    data["created_at"] = datetime.now().isoformat()
+    data["metadata"] = {
+        "source": "climbing.analyze.stock.minor_refresh",
+        "retrieved_at": datetime.now().isoformat(),
+        "version": "1.0.0",
+    }
+
+    # 用 fixture 中的价格/估值覆盖（如有）
+    if "stock_price_data" in fixture:
+        data["stock_price_data"] = fixture["stock_price_data"]
+    if "valuation" in fixture:
+        data["valuation"] = fixture["valuation"]
+    if "target_price_low" in fixture:
+        data["target_price_low"] = fixture["target_price_low"]
+    if "target_price_high" in fixture:
+        data["target_price_high"] = fixture["target_price_high"]
+
+    # 标记为 minor refresh
+    data["summary"] = f"{data.get('summary', '')}\n[minor data refresh]".strip()
+
+    return ResearchSnapshot.model_validate(data)
+
+
+def _copy_snapshot_for_web(report_dir: Path, ticker: str) -> Path | None:
+    """将最新 snapshot.json 复制到 web/public，供前端静态回退读取。"""
+    from src.common.config import settings
+
+    snapshot_src = report_dir / "snapshot.json"
+    if not snapshot_src.exists():
+        return None
+    web_dir = settings.project_root / "web" / "public" / "reports" / "equity" / ticker
+    web_dir.mkdir(parents=True, exist_ok=True)
+    snapshot_dst = web_dir / "snapshot.json"
+    shutil.copy2(snapshot_src, snapshot_dst)
+    return snapshot_dst
+
+
+def _write_report(
+    ctx: typer.Context,
+    ticker: str,
+    snapshot: ResearchSnapshot,
+    report_dir: Path,
+) -> None:
+    """生成 PDF、运行校验、写入四个标准文件并同步到 web/public。"""
+    generator = EquityReportGenerator()
+    report_data = generator.generate_report_data(snapshot.model_dump(mode="json"))
+    html_path = report_dir / "report.html"
+    pdf_path = report_dir / "report.pdf"
+    generator.generate_html(ticker, report_data, html_path)
+    generator.generate_pdf(html_path, pdf_path)
+
+    snapshot.pdf_path = str(pdf_path)
+
+    validator = SnapshotValidator(snapshot)
+    validator.run_all()
+    qa_check = validator.to_dict()
+    if not qa_check["checks_passed"]:
+        logger.warning(
+            "Snapshot validation issues for %s: %s",
+            ticker,
+            qa_check["issues"],
+        )
+
+    references = snapshot.references or []
+    write_equity_report_files(
+        report_dir=report_dir,
+        snapshot=snapshot.model_dump(mode="json"),
+        qa_check=qa_check,
+        references=references,
+        pdf_path=pdf_path,
+    )
+
+    web_path = _copy_snapshot_for_web(report_dir, ticker)
+    if web_path:
+        logger.info("Copied snapshot to web fallback: %s", web_path)
+
+    format_result(
+        ctx,
+        success=True,
+        message=f"个股研报快照生成完成：{ticker}",
+        snapshot_path=report_dir / "snapshot.json",
+        version=snapshot.version,
+        extra={"report_dir": str(report_dir), "checks_passed": qa_check["checks_passed"]},
     )
 
 
@@ -98,21 +186,70 @@ def analyze_stock(
         help="使用 mock skill 输出（测试用，不调用真实 Kimi CLI）",
         envvar="CLIMBING_MOCK_SKILL",
     ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="强制重新生成完整研报，忽略缓存",
+    ),
+    refresh_only: bool = typer.Option(
+        False,
+        "--refresh-only",
+        help="仅在 minor_refresh 层级执行轻量数据刷新",
+    ),
 ) -> None:
-    """生成个股研报快照。"""
-    logger.info("Analyzing stock: %s", ticker)
+    """生成个股研报快照，带三级缓存逻辑。"""
+    logger.info("Analyzing stock: %s (mock=%s, force=%s)", ticker, mock, force)
 
     if not mock and shutil.which("kimi") is None:
         logger.warning("Kimi CLI not found, falling back to mock mode")
         mock = True
 
+    cache = ResearchCache(ticker)
+    tier, existing_snapshot = cache.determine_tier()
+
+    if not force and tier == CacheTier.FRESH:
+        latest_path = cache.latest_snapshot_path()
+        format_result(
+            ctx,
+            success=True,
+            message=f"研报已是最新，直接返回缓存：{ticker}",
+            snapshot_path=latest_path,
+            version=existing_snapshot.version if existing_snapshot else None,
+        )
+        return
+
+    if refresh_only and tier != CacheTier.MINOR_REFRESH:
+        format_result(
+            ctx,
+            success=False,
+            message="--refresh-only 仅在 minor_refresh 层级可用",
+        )
+        raise typer.Exit(code=1)
+
     version = generate_version(f"{ticker}-{datetime.now().isoformat()}")
     report_dir = get_equity_report_dir(ticker, version)
 
-    fixture = _load_fixture("research_snapshot.json")
+    if not force and tier == CacheTier.MINOR_REFRESH:
+        logger.info("Performing minor refresh for %s", ticker)
+        assert existing_snapshot is not None, "MINOR_REFRESH tier must have existing snapshot"
+        fixture = _load_fixture("research_snapshot_full.json")
+        snapshot = _build_minor_refresh_snapshot(
+            existing=existing_snapshot,
+            ticker=ticker,
+            version=version,
+            fixture=fixture,
+        )
+        _write_report(ctx, ticker, snapshot, report_dir)
+        return
+
+    # Full research path: NON_EXISTENT / STALE / force
+    full_fixture = _load_fixture("research_snapshot_full.json")
+    skill_output: dict[str, Any] | None = None
     skill_summary: str | None = None
 
-    if not mock:
+    if mock:
+        skill_output = full_fixture
+    else:
         result = run_skill(
             prompt=f"请生成 {ticker} 的深度研报",
             skill_name="stock-research",
@@ -129,39 +266,26 @@ def analyze_stock(
 
         stdout = result.get("stdout", "") or ""
         if stdout.strip():
-            # 骨架阶段仅将 skill 文本输出作为 summary 补充
-            skill_summary = stdout.strip()[:2000]
+            try:
+                skill_output = json.loads(stdout)
+            except json.JSONDecodeError:
+                # 非 JSON 输出时作为 summary 补充，后续走 fixture 兜底
+                skill_summary = stdout.strip()[:2000]
 
-    snapshot = _build_research_snapshot(ticker, version, fixture, skill_summary)
+    if skill_output is not None:
+        snapshot = build_research_snapshot_from_skill_output(
+            ticker=ticker,
+            version=version,
+            skill_output=skill_output,
+            source="skills/stock-research",
+        )
+    else:
+        legacy_fixture = _load_fixture("research_snapshot.json")
+        snapshot = _build_research_snapshot(
+            ticker, version, legacy_fixture, skill_summary
+        )
 
-    # 生成 PDF
-    generator = EquityReportGenerator()
-    report_data = generator.generate_report_data(snapshot.model_dump(mode="json"))
-    html_path = report_dir / "report.html"
-    pdf_path = report_dir / "report.pdf"
-    generator.generate_html(ticker, report_data, html_path)
-    generator.generate_pdf(html_path, pdf_path)
-
-    snapshot.pdf_path = str(pdf_path)
-
-    qa_check = build_qa_check()
-    references = snapshot.references or []
-    write_equity_report_files(
-        report_dir=report_dir,
-        snapshot=snapshot.model_dump(mode="json"),
-        qa_check=qa_check,
-        references=references,
-        pdf_path=pdf_path,
-    )
-
-    format_result(
-        ctx,
-        success=True,
-        message=f"个股研报快照生成完成：{ticker}",
-        snapshot_path=report_dir / "snapshot.json",
-        version=version,
-        extra={"report_dir": str(report_dir)},
-    )
+    _write_report(ctx, ticker, snapshot, report_dir)
 
 
 @app.command("portfolio")

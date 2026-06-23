@@ -46,6 +46,167 @@ export interface PortfolioSummary {
   positions: PortfolioPosition[]
 }
 
+export interface Valuation {
+  method: string
+  value_low: string | null
+  value_high: string | null
+  assumptions: string[]
+}
+
+export interface RiskItem {
+  risk_type: string
+  description: string
+  impact: 'High' | 'Medium' | 'Low'
+  probability: 'High' | 'Medium' | 'Low'
+  monitoring_signal?: string
+}
+
+export interface DimensionAnalysis {
+  dimension_id: string
+  dimension_name: string
+  conclusion: string
+  key_data_support: string[]
+  so_what: string
+}
+
+export interface Scenario {
+  probability: number
+  assumptions: string
+  revenue: number
+  net_income: number
+  target_pe: number
+  implied_market_cap: number
+}
+
+export interface CatalystEvent {
+  event_date: string
+  event: string
+  importance: 'High' | 'Medium' | 'Low'
+  impact_analysis: string
+  market_expectation: string
+  source: string
+}
+
+export interface ResearchSnapshot {
+  snapshot_id: string
+  report_type: 'research'
+  version: string
+  created_at: string
+  ticker: string
+  summary: string
+  core_narrative?: {
+    core_narrative: string
+    main_title: string
+    sub_title: string
+    core_viewpoint: string
+  }
+  six_dimensions: Record<string, string>
+  six_dimensions_typed?: DimensionAnalysis[]
+  investment_logic?: {
+    short_term: {
+      bull_factors: Array<{ description: string; data_support: string }>
+      bear_factors: Array<{ description: string; risk_level: string }>
+    }
+    long_term: {
+      bull_factors: Array<{ description: string; data_support: string }>
+      bear_factors: Array<{ description: string; risk_level: string }>
+    }
+  }
+  investment_thesis_table?: Array<{
+    dimension: string
+    bull_arguments: string
+    bear_arguments: string
+    key_assumption: string
+    turning_point_signal: string
+    judgment: string
+  }>
+  company_overview?: {
+    background: Record<string, string>
+    business_model: Record<string, string>
+    recent_developments: Record<string, string>
+    business_segments: Array<{
+      segment_name: string
+      revenue: number
+      revenue_pct: number
+      yoy_growth: number
+      gross_margin: number
+    }>
+  }
+  financial_data?: {
+    income_statement: Record<string, number>
+    balance_sheet_highlights: Record<string, number>
+    cash_flow_highlights: Record<string, number>
+    earnings_quality_signals: string[]
+    key_ratios: Record<string, Record<string, number>>
+  }
+  valuation: Valuation
+  valuation_data?: {
+    valuation_table: Record<string, number>
+    consensus_expectations?: {
+      coverage_count: number
+      eps_forecast: number
+      revenue_forecast: number
+      revision_trend: string
+      peg?: number
+    }
+    comparable_companies: Array<{
+      name: string
+      ticker: string
+      market_cap: number
+      pe?: number
+      pb?: number
+      ps?: number
+      ev_ebitda?: number
+    }>
+    industry_average: Record<string, number>
+    premium_discount_analysis: string
+    dcf?: {
+      wacc: number
+      terminal_growth: number
+      fcf_projections: number[]
+      terminal_value: number
+      enterprise_value: number
+      equity_value_per_share: number
+      sensitivity_matrix: Record<string, Record<string, number>>
+    }
+    historical_band?: {
+      pe_band: Record<string, number>
+      pb_band: Record<string, number>
+    }
+    valuation_synthesis?: string
+  }
+  catalyst_calendar?: CatalystEvent[]
+  scenario_analysis?: Record<string, Scenario>
+  risks: string[]
+  risks_typed?: RiskItem[]
+  assumptions: string[]
+  invalidation_conditions: string[]
+  target_price_low: string | null
+  target_price_high: string | null
+  industry_supply_chain?: {
+    industry_overview: string
+    market_concentration: string
+    pricing_power: string
+    entry_barriers: string
+    competitive_trend: string
+    supply_chain: Record<string, Array<{ name: string; role: string }>>
+  }
+  stock_price_data?: {
+    current_price: number
+    high_52w: number
+    low_52w: number
+    market_cap: number
+    pe_ttm: number
+    pb: number
+    daily_volume: number
+    turnover_rate: number
+    beta: number
+    dividend_yield: number
+  }
+  pdf_path: string | null
+  references: Array<{ title: string; url?: string; source?: string; tier?: number }>
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 export async function fetchSecurityMaster(): Promise<SecurityMasterItem[]> {
@@ -58,10 +219,21 @@ export async function fetchSecurityMaster(): Promise<SecurityMasterItem[]> {
   }
 }
 
-export async function fetchStockReport(ticker: string) {
-  const res = await fetch(`${API_BASE}/reports/stock/${ticker}`)
-  if (!res.ok) throw new Error('Failed to fetch stock report')
-  return res.json()
+export async function fetchStockReport(ticker: string): Promise<ResearchSnapshot> {
+  // 优先调用后端 API；开发环境若无后端，回退读取 CLI 写入的静态快照
+  try {
+    const res = await fetch(`${API_BASE}/reports/stock/${ticker}`)
+    if (res.ok) return res.json()
+  } catch {
+    // fallthrough to static JSON
+  }
+  try {
+    const res = await fetch(`/reports/equity/${ticker}/snapshot.json`)
+    if (!res.ok) throw new Error(`Failed to fetch stock report for ${ticker}`)
+    return res.json()
+  } catch {
+    throw new Error(`Failed to fetch stock report for ${ticker}`)
+  }
 }
 
 export async function fetchPortfolioSummary(): Promise<PortfolioSummary | null> {

@@ -107,6 +107,37 @@ def test_equity_report_generator_pdf_placeholder(tmp_project_root: Path) -> None
     assert result.read_bytes().startswith(b"%PDF-1.4")
 
 
+def test_equity_report_files_include_validator_qa_check(tmp_project_root: Path) -> None:
+    """write_equity_report_files 接受 SnapshotValidator 输出并写入 qa_check.json。"""
+    from src.common.models import ResearchSnapshot, SourceMetadata
+    from src.common.snapshot_validator import SnapshotValidator
+
+    report_dir = tmp_project_root / "data" / "reports" / "equity" / "000725.SZ" / "v1"
+    report_dir.mkdir(parents=True)
+
+    snapshot = ResearchSnapshot(
+        snapshot_id="research-000725.SZ-v1",
+        report_type="research",
+        version="v1",
+        ticker="000725.SZ",
+        summary="占位",
+        metadata=SourceMetadata(source="test", retrieved_at="2026-06-23T12:00:00", version="1.0.0"),
+    )
+    validator = SnapshotValidator(snapshot)
+    validator.run_all()
+    qa_check = validator.to_dict()
+
+    result = write_equity_report_files(report_dir, snapshot.model_dump(mode="json"), qa_check, [])
+    qa_path = result["qa_check"]
+    assert qa_path.exists()
+    loaded = json.loads(qa_path.read_text(encoding="utf-8"))
+    assert "checks_passed" in loaded
+    assert "issues" in loaded
+    assert "checks" in loaded
+    assert loaded["checks_passed"] is False
+    assert loaded["issues"]
+
+
 def test_equity_report_generator_report_data() -> None:
     snapshot: dict[str, Any] = {
         "ticker": "000725.SZ",

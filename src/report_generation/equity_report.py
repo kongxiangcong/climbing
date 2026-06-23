@@ -53,7 +53,7 @@ class EquityReportGenerator:
         优先使用 weasyprint；若不可用则生成占位 PDF。
         """
         try:
-            from weasyprint import HTML  # type: ignore
+            from weasyprint import HTML
 
             HTML(filename=str(html_path)).write_pdf(str(pdf_path))
             logger.info("Generated PDF report -> %s", pdf_path)

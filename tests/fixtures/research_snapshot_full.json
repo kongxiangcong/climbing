@@ -1,0 +1,533 @@
+{
+  "metadata": {
+    "company_name": "京东方科技集团股份有限公司 / BOE Technology Group Co., Ltd.",
+    "ticker": "000725.SZ",
+    "market": "A-share",
+    "report_language": "zh-CN",
+    "report_date": "2026-06-23",
+    "latest_trading_date": "2026-06-23",
+    "latest_financial_report": "2025 年报",
+    "next_earnings_date": "2026-08-25",
+    "benchmark_index": "000001.SH",
+    "benchmark_name": "上证指数 / Shanghai Composite",
+    "output_level": "equity-report"
+  },
+  "core_narrative": {
+    "core_narrative": "半导体显示面板行业处于周期底部企稳阶段，京东方作为全球 LCD 龙头，份额与成本优势稳固；OLED 业务在中高端手机渗透加速，有望贡献第二增长曲线。当前估值处于历史低位，若行业稼动率回升、面板价格温和上涨，公司盈利弹性较大。核心风险在于面板价格超预期下跌及 OLED 竞争加剧。",
+    "main_title": "LCD 龙头筑底，OLED 放量可期",
+    "sub_title": "周期底部估值低位，关注稼动率与价格拐点",
+    "core_viewpoint": "① 公司为全球 LCD 龙头，市占率与成本优势显著；② 2025 年营收规模稳定，盈利能力受价格周期拖累；③ 当前 PB 处于历史低位，估值具备安全边际；④ 主要风险为面板价格波动与 OLED 替代进度。"
+  },
+  "six_dimensions": [
+    {
+      "dimension_id": "H1",
+      "dimension_name": "竞争格局",
+      "conclusion": "全球 LCD 面板行业双寡头格局稳固，京东方与 TCL 华星合计市占率超过 50%，具备定价权与成本优势。",
+      "key_data_support": [
+        "2025 年全球 LCD TV 面板出货量京东方市占率 25.3%",
+        "高世代线单位成本较行业平均低 8-12%"
+      ],
+      "so_what": "龙头地位带来盈利韧性，周期底部仍能保持正经营现金流。",
+      "information_class": "verified"
+    },
+    {
+      "dimension_id": "H2",
+      "dimension_name": "增长驱动",
+      "conclusion": "短期驱动为 LCD 面板价格企稳回升；中长期看 OLED 手机面板与车载显示放量。",
+      "key_data_support": [
+        "2026Q2 32/55/65 吋面板价格环比回升 3-5%",
+        "OLED 手机面板客户覆盖国内 TOP5 品牌"
+      ],
+      "so_what": "若价格持续回升，2026H2 毛利率有望修复至 18% 以上。",
+      "information_class": "partially_verified"
+    },
+    {
+      "dimension_id": "H3",
+      "dimension_name": "盈利质量",
+      "conclusion": "盈利质量中等，经营现金流覆盖净利润，但资本开支较高导致自由现金流承压。",
+      "key_data_support": [
+        "2025 年 OCF/NI 为 1.25x",
+        "非经常性损益占净利润 8%",
+        "资本开支占营收比重 18%"
+      ],
+      "so_what": "需关注 OLED 产线折旧与稼动率对 ROE 的拖累。",
+      "anomalies": ["资本开支持续高于同行"],
+      "information_class": "verified"
+    },
+    {
+      "dimension_id": "H4",
+      "dimension_name": "估值与预期",
+      "conclusion": "当前估值处于历史底部区间，一致预期已较为悲观，存在预期修复空间。",
+      "key_data_support": [
+        "当前 PB 0.95x，处于近 5 年 15% 分位",
+        "一致预期 2026 年 EPS 0.28 元，对应 PE 17x"
+      ],
+      "so_what": "估值安全边际较高，但需业绩兑现才能驱动重估。",
+      "information_class": "verified"
+    },
+    {
+      "dimension_id": "H5",
+      "dimension_name": "地缘/政策",
+      "conclusion": "政策面鼓励显示产业自主可控，但面板行业为资本密集型，受地方补贴与出口退税影响。",
+      "key_data_support": [
+        "国家大基金二期持有显示产业相关股份",
+        "2025 年新型显示产业专项补贴约 12 亿元"
+      ],
+      "so_what": "补贴可持续性影响短期利润，但长期产业地位稳固。",
+      "information_class": "partially_verified"
+    },
+    {
+      "dimension_id": "H6",
+      "dimension_name": "技术/产品周期",
+      "conclusion": "LCD 技术成熟，OLED 与 Mini LED 为升级方向；公司 OLED 良率已接近韩系厂商。",
+      "key_data_support": [
+        "第 6 代 AMOLED 产线良率 92%",
+        "Mini LED 背光产品已批量出货"
+      ],
+      "so_what": "技术迭代顺利将打开高端市场，否则面临份额流失风险。",
+      "information_class": "partially_verified"
+    }
+  ],
+  "investment_logic": {
+    "short_term": {
+      "bull_factors": [
+        {
+          "description": "面板价格企稳回升",
+          "data_support": "2026Q2 主流尺寸价格环比上涨 3-5%",
+          "inflection_condition": "价格连续两季度环比上涨",
+          "pricing_level": "行业性拐点"
+        },
+        {
+          "description": "OLED 手机面板出货放量",
+          "data_support": "2026Q1 OLED 业务收入同比 +35%",
+          "inflection_condition": "大客户旗舰机导入",
+          "pricing_level": "结构性增长"
+        }
+      ],
+      "bear_factors": [
+        {
+          "description": "下游需求复苏不及预期",
+          "risk_level": "Medium",
+          "trigger_condition": "TV 出货连续两季度同比下滑"
+        }
+      ],
+      "capital_market_structure": {
+        "description": "北向资金近期小幅增持，融资余额处于年内低位，筹码结构相对干净。",
+        "data_support": "近 1 个月北向净流入 2.1 亿元，融资余额环比下降 5%"
+      }
+    },
+    "long_term": {
+      "bull_factors": [
+        {
+          "description": "LCD 行业格局优化，龙头定价权提升",
+          "data_support": "过去 5 年行业 CR3 从 45% 提升至 65%",
+          "inflection_condition": "行业稼动率长期维持 80% 以上",
+          "pricing_level": "格局重估"
+        },
+        {
+          "description": "OLED 与车载显示成为第二曲线",
+          "data_support": "车载显示 2025 年收入同比 +28%",
+          "inflection_condition": "OLED 收入占比突破 25%",
+          "pricing_level": "成长溢价"
+        }
+      ],
+      "bear_factors": [
+        {
+          "description": "OLED 竞争加剧导致盈利能力弱于预期",
+          "risk_level": "High",
+          "trigger_condition": "OLED 毛利率低于 10% 持续两年"
+        }
+      ]
+    }
+  },
+  "investment_thesis_table": [
+    {
+      "dimension": "竞争格局 H1",
+      "bull_arguments": "双寡头格局稳固，成本领先",
+      "bear_arguments": "韩系厂商高端技术仍具优势",
+      "key_assumption": "LCD 份额维持 25% 以上",
+      "turning_point_signal": "市占率连续两季度下滑",
+      "judgment": "偏多"
+    },
+    {
+      "dimension": "增长驱动 H2",
+      "bull_arguments": "价格企稳 + OLED 放量",
+      "bear_arguments": "需求复苏力度不确定",
+      "key_assumption": "2026 年营收同比 +8%",
+      "turning_point_signal": "面板价格环比转负",
+      "judgment": "中性偏多"
+    },
+    {
+      "dimension": "盈利质量 H3",
+      "bull_arguments": "OCF 覆盖净利润",
+      "bear_arguments": "资本开支高、FCF 承压",
+      "key_assumption": "折旧高峰已过",
+      "turning_point_signal": "ROE 跌破 5%",
+      "judgment": "中性"
+    },
+    {
+      "dimension": "估值与预期 H4",
+      "bull_arguments": "PB 处于历史低位",
+      "bear_arguments": "一致预期可能进一步下调",
+      "key_assumption": "2026 年 EPS 0.28 元",
+      "turning_point_signal": "业绩 miss 超过 20%",
+      "judgment": "偏多"
+    }
+  ],
+  "company_overview": {
+    "background": {
+      "founding": "1993 年创立，2001 年在深交所上市，总部位于北京。",
+      "management": "管理层具备深厚产业背景，执行力强；近年加大 OLED 业务投入。",
+      "ownership": "北京电控为实际控制人，国资背景；北向资金与公募持仓较为稳定。"
+    },
+    "business_model": {
+      "value_proposition": "为全球客户提供半导体显示产品及解决方案，覆盖手机、TV、IT、车载等终端。",
+      "moat": "规模优势 + 高世代线成本领先 + 客户粘性",
+      "cost_structure": "固定资产折旧与原材料为主要成本，规模效应显著。"
+    },
+    "recent_developments": {
+      "summary": "2025 年公司营收稳步增长，OLED 业务放量；行业价格仍处周期底部。",
+      "key_financials": "2025 年营收 2100 亿元，同比 +6%；归母净利润 45 亿元，同比 +12%。",
+      "announcements": "2026 年 4 月公告第 8.6 代 OLED 产线扩产计划。"
+    },
+    "business_segments": [
+      {
+        "segment_name": "LCD 面板",
+        "revenue": 1450.0,
+        "revenue_pct": 69.0,
+        "yoy_growth": 2.0,
+        "gross_margin": 14.5
+      },
+      {
+        "segment_name": "OLED 面板",
+        "revenue": 420.0,
+        "revenue_pct": 20.0,
+        "yoy_growth": 35.0,
+        "gross_margin": 8.0
+      },
+      {
+        "segment_name": "物联网/创新业务",
+        "revenue": 230.0,
+        "revenue_pct": 11.0,
+        "yoy_growth": 18.0,
+        "gross_margin": 22.0
+      }
+    ]
+  },
+  "financial_data": {
+    "income_statement": {
+      "revenue_2023": 1980.0,
+      "revenue_2024": 2020.0,
+      "revenue_2025": 2100.0,
+      "revenue_2026e": 2268.0,
+      "revenue_2027e": 2449.0,
+      "net_income_2023": 25.0,
+      "net_income_2024": 40.0,
+      "net_income_2025": 45.0,
+      "net_income_2026e": 78.0,
+      "net_income_2027e": 112.0,
+      "eps_2026e": 0.28,
+      "gross_margin_2025": 15.2,
+      "gross_margin_2026e": 17.5
+    },
+    "balance_sheet_highlights": {
+      "total_assets": 4200.0,
+      "equity": 1850.0,
+      "net_debt": 680.0,
+      "goodwill": 12.0
+    },
+    "cash_flow_highlights": {
+      "ocf_2025": 320.0,
+      "capex_2025": 380.0,
+      "fcf_2025": -60.0,
+      "dividend_paid": 18.0
+    },
+    "earnings_quality_signals": [
+      "OCF/净利润 1.25x，盈利现金含量健康",
+      "非经常性损益占比 8%，处于合理区间",
+      "应收账款周转天数 45 天，较行业平均短"
+    ],
+    "key_ratios": {
+      "profitability": {
+        "gross_margin": 15.2,
+        "net_margin": 2.1,
+        "roe": 3.8,
+        "roic": 2.5
+      },
+      "growth": {
+        "revenue_yoy": 6.0,
+        "net_income_yoy": 12.0,
+        "eps_yoy": 15.0
+      },
+      "solvency": {
+        "debt_ratio": 0.42,
+        "current_ratio": 1.35,
+        "interest_coverage": 3.2
+      },
+      "cash_flow": {
+        "ocf": 320.0,
+        "fcf": -60.0,
+        "ocf_to_net_income": 1.25
+      }
+    }
+  },
+  "valuation": {
+    "method": "PE-band + 可比公司",
+    "value_low": 4.5,
+    "value_high": 6.0,
+    "assumptions": [
+      "2026 年行业供需趋于平衡",
+      "OLED 业务毛利率修复至 12%"
+    ]
+  },
+  "valuation_data": {
+    "valuation_table": {
+      "pe_ttm": 17.5,
+      "pb": 0.95,
+      "ps": 0.45,
+      "ev_ebitda": 6.8
+    },
+    "consensus_expectations": {
+      "coverage_count": 18,
+      "eps_forecast": 0.28,
+      "revenue_forecast": 2268.0,
+      "revision_trend": "近 1 个月 EPS 一致预期小幅上调 2%",
+      "peg": 1.15
+    },
+    "comparable_companies": [
+      {
+        "name": "TCL 科技",
+        "ticker": "000100.SZ",
+        "market_cap": 850.0,
+        "pe": 22.0,
+        "pb": 1.1,
+        "ps": 0.55,
+        "ev_ebitda": 8.2
+      },
+      {
+        "name": "深天马 A",
+        "ticker": "000050.SZ",
+        "market_cap": 280.0,
+        "pe": 35.0,
+        "pb": 0.8,
+        "ps": 0.6,
+        "ev_ebitda": 9.5
+      },
+      {
+        "name": "LG Display",
+        "ticker": "034220.KS",
+        "market_cap": 420.0,
+        "pe": 18.0,
+        "pb": 0.7,
+        "ps": 0.35,
+        "ev_ebitda": 5.5
+      }
+    ],
+    "industry_average": {
+      "pe": 25.0,
+      "pb": 0.87,
+      "ps": 0.5,
+      "ev_ebitda": 7.7
+    },
+    "premium_discount_analysis": "公司相对行业 PB 折价约 9%，但 PE 折价约 30%，反映市场对盈利弹性的悲观预期。",
+    "dcf": {
+      "wacc": 8.5,
+      "terminal_growth": 2.5,
+      "fcf_projections": [20.0, 55.0, 95.0, 130.0, 160.0],
+      "terminal_value": 1850.0,
+      "enterprise_value": 2450.0,
+      "equity_value_per_share": 6.8,
+      "sensitivity_matrix": {
+        "base": {"wacc_8.5_g_2.5": 6.8},
+        "bull": {"wacc_7.5_g_3.0": 8.5},
+        "bear": {"wacc_9.5_g_2.0": 5.2}
+      }
+    },
+    "historical_band": {
+      "pe_band": {
+        "high": 35.0,
+        "low": 12.0,
+        "median": 22.0,
+        "current_percentile": 15.0
+      },
+      "pb_band": {
+        "high": 2.1,
+        "low": 0.8,
+        "median": 1.35,
+        "current_percentile": 10.0
+      }
+    },
+    "valuation_synthesis": "可比公司与历史估值带均显示当前估值处于低位；DCF 隐含价值 6.8 元，与目标价区间上限接近。"
+  },
+  "catalyst_calendar": [
+    {
+      "event_date": "2026-08-25",
+      "event": "2026 年半年报披露",
+      "importance": "High",
+      "impact_analysis": "验证面板价格回升与 OLED 放量对毛利率的拉动。",
+      "market_expectation": "营收同比 +8%，净利润同比 +40%",
+      "source": "交易所预约披露"
+    },
+    {
+      "event_date": "2026-07-15",
+      "event": "6 月面板价格发布",
+      "importance": "High",
+      "impact_analysis": "价格连续上涨将强化周期底部拐点预期。",
+      "market_expectation": "主流尺寸环比上涨 2-4%",
+      "source": "WitsView"
+    },
+    {
+      "event_date": "2026-09-10",
+      "event": "大客户新机 OLED 面板量产",
+      "importance": "Medium",
+      "impact_analysis": "OLED 稼动率提升有助于摊薄固定成本。",
+      "market_expectation": "月度 OLED 出货环比增长 15%",
+      "source": "产业链调研"
+    },
+    {
+      "event_date": "2026-10-20",
+      "event": "三季报披露",
+      "importance": "Medium",
+      "impact_analysis": "确认下半年盈利修复持续性。",
+      "market_expectation": "单季毛利率回升至 17% 以上",
+      "source": "交易所预约披露"
+    }
+  ],
+  "scenario_analysis": {
+    "optimistic": {
+      "probability": 0.25,
+      "assumptions": "面板价格大幅上涨，OLED 毛利率快速修复",
+      "revenue": 2450.0,
+      "net_income": 120.0,
+      "target_pe": 22.0,
+      "implied_market_cap": 2640.0
+    },
+    "base_case": {
+      "probability": 0.5,
+      "assumptions": "行业温和复苏，OLED 稳步放量",
+      "revenue": 2268.0,
+      "net_income": 78.0,
+      "target_pe": 18.0,
+      "implied_market_cap": 1404.0
+    },
+    "pessimistic": {
+      "probability": 0.25,
+      "assumptions": "价格再度下行，OLED 竞争恶化",
+      "revenue": 1980.0,
+      "net_income": 35.0,
+      "target_pe": 14.0,
+      "implied_market_cap": 490.0
+    }
+  },
+  "risks": [
+    "面板价格超预期下跌",
+    "OLED 替代进度不及预期",
+    "下游需求复苏弱于预期",
+    "资本开支导致自由现金流承压"
+  ],
+  "risks_typed": [
+    {
+      "risk_type": "行业周期风险",
+      "description": "面板价格超预期下跌导致毛利率与盈利大幅波动。",
+      "impact": "High",
+      "probability": "Medium",
+      "monitoring_signal": "主流尺寸面板价格连续两季度环比下跌超过 10%"
+    },
+    {
+      "risk_type": "技术替代风险",
+      "description": "OLED 渗透率提升快于公司 OLED 业务放量速度。",
+      "impact": "High",
+      "probability": "Medium",
+      "monitoring_signal": "OLED 手机面板份额连续两个季度下滑"
+    },
+    {
+      "risk_type": "需求复苏不及预期",
+      "description": "TV、IT 等终端需求持续低迷，出货量低于预期。",
+      "impact": "Medium",
+      "probability": "Medium",
+      "monitoring_signal": "全球 TV 出货连续两季度同比下滑超过 5%"
+    },
+    {
+      "risk_type": "资本开支风险",
+      "description": "高世代 OLED 产线投资导致折旧增加、自由现金流承压。",
+      "impact": "Medium",
+      "probability": "High",
+      "monitoring_signal": "资本开支占营收比重连续两年高于 20%"
+    }
+  ],
+  "assumptions": [
+    "LCD 需求保持平稳",
+    "公司 OLED 业务放量",
+    "2026 年行业供需趋于平衡",
+    "OLED 业务毛利率修复至 12%"
+  ],
+  "invalidation_conditions": [
+    "季度营收同比下滑超过 20%",
+    "行业稼动率跌破 60%",
+    "OLED 毛利率连续两季度低于 5%",
+    "面板价格连续两季度环比下跌超过 10%"
+  ],
+  "target_price_low": 4.8,
+  "target_price_high": 6.2,
+  "industry_supply_chain": {
+    "industry_overview": "半导体显示面板行业位于电子产业链中游，上游为玻璃基板、偏光片、驱动 IC 等材料与设备，下游为 TV、手机、IT、车载等终端品牌。",
+    "market_concentration": "LCD TV 面板 CR3 约 65%，CR5 约 80%，行业集中度较高。",
+    "pricing_power": "龙头厂商通过稼动率调节影响价格，但下游品牌客户集中，议价权有限。",
+    "entry_barriers": "高世代线投资规模数百亿元，技术积累与客户认证周期长，进入壁垒极高。",
+    "competitive_trend": "LCD 格局稳定，OLED 竞争仍较激烈，国内厂商份额持续提升。",
+    "supply_chain": {
+      "upstream": [
+        {"name": "康宁", "role": "玻璃基板"},
+        {"name": "日本电气硝子", "role": "玻璃基板"},
+        {"name": "住友化学", "role": "偏光片"}
+      ],
+      "midstream": [
+        {"name": "京东方", "role": "面板制造"},
+        {"name": "TCL 华星", "role": "面板制造"}
+      ],
+      "downstream": [
+        {"name": "三星电子", "role": "TV/手机终端"},
+        {"name": "华为", "role": "手机终端"},
+        {"name": "小米", "role": "手机/IT 终端"}
+      ],
+      "end_users": [
+        {"name": "消费者", "role": "终端用户"}
+      ]
+    }
+  },
+  "stock_price_data": {
+    "stock_csv_path": "data/raw/000725_price.csv",
+    "benchmark_csv_path": "data/raw/000001_price.csv",
+    "current_price": 4.85,
+    "high_52w": 5.6,
+    "low_52w": 3.9,
+    "market_cap": 1850.0,
+    "pe_ttm": 17.5,
+    "pb": 0.95,
+    "daily_volume": 125000000.0,
+    "turnover_rate": 0.035,
+    "beta": 1.05,
+    "dividend_yield": 0.012
+  },
+  "pdf_path": null,
+  "references": [
+    {
+      "title": "公司 2025 年报",
+      "url": "",
+      "source": "深交所",
+      "tier": 1
+    },
+    {
+      "title": "WitsView 面板价格数据",
+      "url": "",
+      "source": "WitsView",
+      "tier": 2
+    },
+    {
+      "title": "京东方投资者交流纪要",
+      "url": "",
+      "source": "公司公告",
+      "tier": 1
+    }
+  ]
+}

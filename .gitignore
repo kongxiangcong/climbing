@@ -62,6 +62,7 @@ web/public/system-status.json
 web/public/security-master.json
 web/public/market-summary.json
 web/public/portfolio-summary.json
+web/public/reports/
 
 # OS
 .DS_Store

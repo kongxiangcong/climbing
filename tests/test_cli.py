@@ -120,7 +120,7 @@ def test_update_daily_review_generates_daily_review_snapshot() -> None:
 
 def test_analyze_stock_generates_research_snapshot() -> None:
     ticker = "000725.SZ"
-    data = _run("analyze", "stock", ticker, "--mock")
+    data = _run("analyze", "stock", ticker, "--mock", "--force")
     assert data["success"] is True
     snapshot_path = Path(data["snapshot_path"])
     # 新路径结构: data/reports/equity/{ticker}/{version}/snapshot.json
@@ -132,11 +132,47 @@ def test_analyze_stock_generates_research_snapshot() -> None:
     assert research.report_type == "research"
     assert research.ticker == ticker
 
+    # Slice 5b: 校验 equity-researcher 13-section 扩展字段已生成
+    assert research.research_metadata is not None
+    assert research.core_narrative is not None
+    assert len(research.six_dimensions_typed) == 6
+    assert research.investment_logic is not None
+    assert len(research.investment_thesis_table) == 4
+    assert research.company_overview is not None
+    assert research.financial_data is not None
+    assert research.valuation_data is not None
+    assert len(research.catalyst_calendar) >= 4
+    assert research.industry_supply_chain is not None
+    assert research.stock_price_data is not None
+
     report_dir = snapshot_path.parent
     assert (report_dir / "report.pdf").exists()
     assert (report_dir / "qa_check.json").exists()
     assert (report_dir / "references.json").exists()
     assert research.pdf_path == str(report_dir / "report.pdf")
+
+
+def test_analyze_stock_second_run_uses_cache() -> None:
+    ticker = "CLI-CACHE.SZ"
+    first = _run("analyze", "stock", ticker, "--mock")
+    assert first["success"] is True
+    first_version = first["version"]
+
+    second = _run("analyze", "stock", ticker, "--mock")
+    assert second["success"] is True
+    assert second["version"] == first_version
+    assert second["snapshot_path"] == first["snapshot_path"]
+
+
+def test_analyze_stock_force_regenerates() -> None:
+    ticker = "CLI-FORCE.SZ"
+    first = _run("analyze", "stock", ticker, "--mock")
+    assert first["success"] is True
+    first_version = first["version"]
+
+    forced = _run("analyze", "stock", ticker, "--mock", "--force")
+    assert forced["success"] is True
+    assert forced["version"] != first_version
 
 
 def test_portfolio_transactions_generates_portfolio_snapshot(tmp_path: Path) -> None:
