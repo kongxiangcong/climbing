@@ -8,8 +8,6 @@ export interface SystemStatus {
   }>
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE || '/api'
-
 export interface SecurityMasterItem {
   ticker: string
   name: string
@@ -19,6 +17,36 @@ export interface SecurityMasterItem {
   industry?: string
   tags: string[]
 }
+
+export interface PortfolioPosition {
+  ticker: string
+  quantity: number
+  cost_basis: string
+  market_price: string | null
+  market_value: string | null
+  unrealized_pnl: string | null
+  realized_pnl: string
+  account: string
+}
+
+export interface PortfolioExposure {
+  category: string
+  value_pct: string
+}
+
+export interface PortfolioSummary {
+  last_snapshot_at: string
+  version: string
+  cash: string
+  total_assets: string
+  total_market_value: string
+  unrealized_pnl: string
+  realized_pnl: string
+  sector_exposure: PortfolioExposure[]
+  positions: PortfolioPosition[]
+}
+
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 export async function fetchSecurityMaster(): Promise<SecurityMasterItem[]> {
   try {
@@ -36,10 +64,21 @@ export async function fetchStockReport(ticker: string) {
   return res.json()
 }
 
-export async function fetchPortfolioSummary() {
-  const res = await fetch(`${API_BASE}/portfolio/summary`)
-  if (!res.ok) throw new Error('Failed to fetch portfolio summary')
-  return res.json()
+export async function fetchPortfolioSummary(): Promise<PortfolioSummary | null> {
+  // 优先调用后端 API；开发环境若无后端，回退读取 CLI 写入的静态摘要 JSON
+  try {
+    const res = await fetch(`${API_BASE}/portfolio/summary`)
+    if (res.ok) return res.json()
+  } catch {
+    // fallthrough to static JSON
+  }
+  try {
+    const res = await fetch('/portfolio-summary.json')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
 
 export async function fetchPlans() {

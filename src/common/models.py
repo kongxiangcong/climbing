@@ -47,6 +47,29 @@ class PriceBar(BaseModel):
     metadata: SourceMetadata | None = None
 
 
+class TransactionSide(str, Enum):
+    """交易方向。"""
+
+    BUY = "buy"
+    SELL = "sell"
+
+
+class Transaction(BaseModel):
+    """标准化交易流水记录。"""
+
+    ticker: str
+    side: str  # buy / sell
+    quantity: int = Field(ge=1)
+    price: Decimal = Field(ge=Decimal("0"))
+    fee: Decimal = Decimal("0")
+    trade_date: date
+    account: str = "default"
+    name: str | None = None
+    notes: str | None = None
+    raw_source: str | None = None
+    metadata: SourceMetadata | None = None
+
+
 class Position(BaseModel):
     """持仓记录。"""
 
