@@ -1,12 +1,19 @@
 """天眼查企业数据客户端封装。"""
 
 from pathlib import Path
+from typing import Any
 
 from src.common.config import settings
 from src.common.logger import get_logger
 from src.common.paths import get_data_dir
 
 logger = get_logger(__name__)
+
+
+def _get_data_source_tool() -> Any:
+    """Kimi datasource 工具在运行时被注入，不能作为普通 Python 模块 import。"""
+    tool = __import__("mcp__plugin-kimi-datasource_data")
+    return getattr(tool, "call_data_source_tool")
 
 
 class TianyanchaClient:
@@ -20,19 +27,20 @@ class TianyanchaClient:
     def _save_path(self, name: str) -> Path:
         return self.raw_dir / name
 
-    def search_apis(self, query: str, limit: int = 10) -> dict:
+    def search_apis(self, query: str, limit: int = 10) -> dict[str, Any]:
         """搜索可用 API。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
-        return call_data_source_tool(
+        result: dict[str, Any] = call_data_source_tool(
             data_source_name="tianyancha",
             api_name="tianyancha_api_search",
             params={"query": query, "limit": str(limit)},
         )
+        return result
 
-    def call_api(self, api_name: str, params: dict, output_name: str) -> Path:
+    def call_api(self, api_name: str, params: dict[str, Any], output_name: str) -> Path:
         """调用指定天眼查 API。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(output_name)
         call_data_source_tool(

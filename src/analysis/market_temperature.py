@@ -67,12 +67,12 @@ class MarketTemperature:
     def generate_from_data(self, price_df: pd.DataFrame, macro_df: pd.DataFrame | None = None) -> dict[str, Any]:
         """从价格数据生成市场温度（占位实现，需逐步完善）。"""
         inputs = {
-            "valuation_percentile": 50,
-            "trading_heat": 50,
-            "margin_expansion": 50,
-            "market_breadth": 50,
-            "volatility_environment": 50,
-            "liquidity_environment": 50,
+            "valuation_percentile": 50.0,
+            "trading_heat": 50.0,
+            "margin_expansion": 50.0,
+            "market_breadth": 50.0,
+            "volatility_environment": 50.0,
+            "liquidity_environment": 50.0,
         }
         if not price_df.empty and "volume" in price_df.columns:
             # 简单示例：用 20 日成交量分位作为成交热度

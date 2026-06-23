@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -23,7 +24,7 @@ class PlanReportGenerator:
     def generate(
         self,
         plan: TradePlan,
-        deviation: dict,
+        deviation: dict[str, Any],
         latest_price: float,
         report_date: str | None = None,
     ) -> Path:

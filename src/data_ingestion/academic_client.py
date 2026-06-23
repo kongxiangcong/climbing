@@ -22,7 +22,9 @@ class AcademicClient:
 
     def search_arxiv(self, query: str, max_results: int = 10) -> Path:
         """搜索 arXiv 论文。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        # Kimi datasource 工具在运行时被注入，不能作为普通 Python 模块 import
+        tool = __import__("mcp__plugin-kimi-datasource_data")
+        call_data_source_tool = getattr(tool, "call_data_source_tool")
 
         path = self._save_path(f"arxiv_{query.replace(' ', '_')}.csv")
         call_data_source_tool(
@@ -35,7 +37,8 @@ class AcademicClient:
 
     def search_scholar(self, query: str, num_results: int = 10) -> Path:
         """搜索 Google Scholar 论文。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        tool = __import__("mcp__plugin-kimi-datasource_data")
+        call_data_source_tool = getattr(tool, "call_data_source_tool")
 
         path = self._save_path(f"scholar_{query.replace(' ', '_')}.csv")
         call_data_source_tool(

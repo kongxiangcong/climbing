@@ -1,5 +1,7 @@
 """技术指标计算。"""
 
+from typing import Any
+
 import pandas as pd
 
 
@@ -11,17 +13,19 @@ class TechnicalIndicators:
         if "close" not in self.df.columns:
             raise ValueError("价格数据必须包含 close 列")
 
-    def sma(self, window: int) -> pd.Series:
+    def sma(self, window: int) -> pd.Series[Any]:
         """简单移动平均。"""
-        return self.df["close"].rolling(window=window).mean()
+        series: pd.Series[Any] = self.df["close"].rolling(window=window).mean()
+        return series
 
-    def ema(self, window: int) -> pd.Series:
+    def ema(self, window: int) -> pd.Series[Any]:
         """指数移动平均。"""
-        return self.df["close"].ewm(span=window, adjust=False).mean()
+        series: pd.Series[Any] = self.df["close"].ewm(span=window, adjust=False).mean()
+        return series
 
     def rsi(self, window: int = 14) -> float:
         """相对强弱指数，返回最新值。"""
-        close = self.df["close"]
+        close: pd.Series[Any] = self.df["close"]
         delta = close.diff()
         gain = delta.clip(lower=0)
         loss = -delta.clip(upper=0)
@@ -54,7 +58,7 @@ class TechnicalIndicators:
             "lower": sma - num_std * std,
         })
 
-    def ma_signal(self) -> dict:
+    def ma_signal(self) -> dict[str, Any]:
         """均线多空信号。"""
         self.df["ma5"] = self.sma(5)
         self.df["ma10"] = self.sma(10)

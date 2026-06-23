@@ -1,0 +1,16 @@
+{
+  "trade_date": "2026-06-23",
+  "highlights": [
+    "上证指数窄幅震荡，成交额维持低位。",
+    "北向资金净流入约 12 亿元。"
+  ],
+  "sentiment": "中性偏谨慎",
+  "portfolio_risk": {
+    "level": "low",
+    "concentration": "单一标的占比未超限"
+  },
+  "watchlist": [
+    "000725.SZ",
+    "600519.SH"
+  ]
+}

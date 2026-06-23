@@ -1,12 +1,19 @@
 """World Bank Open Data 客户端封装。"""
 
 from pathlib import Path
+from typing import Any
 
 from src.common.config import settings
 from src.common.logger import get_logger
 from src.common.paths import get_data_dir
 
 logger = get_logger(__name__)
+
+
+def _get_data_source_tool() -> Any:
+    """Kimi datasource 工具在运行时被注入，不能作为普通 Python 模块 import。"""
+    tool = __import__("mcp__plugin-kimi-datasource_data")
+    return getattr(tool, "call_data_source_tool")
 
 
 class WorldBankClient:
@@ -20,11 +27,11 @@ class WorldBankClient:
     def _save_path(self, name: str) -> Path:
         return self.raw_dir / name
 
-    def search_indicators(self, query: str) -> dict:
+    def search_indicators(self, query: str) -> dict[str, Any]:
         """搜索指标代码。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
-        result = call_data_source_tool(
+        result: dict[str, Any] = call_data_source_tool(
             data_source_name="world_bank_open_data",
             api_name="world_bank_search_indicators",
             params={"query": query},
@@ -40,7 +47,7 @@ class WorldBankClient:
         most_recent: int | None = None,
     ) -> Path:
         """获取宏观数据。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         name = f"{country}_{indicators.replace(',', '_')}"
         if date_range:
@@ -49,7 +56,7 @@ class WorldBankClient:
             name += f"_last{most_recent}"
         path = self._save_path(f"{name}.csv")
 
-        params: dict = {"country": country, "indicator": indicators, "filepath": str(path)}
+        params: dict[str, Any] = {"country": country, "indicator": indicators, "filepath": str(path)}
         if date_range:
             params["date_range"] = date_range
         if most_recent:

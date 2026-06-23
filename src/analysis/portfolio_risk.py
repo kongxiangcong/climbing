@@ -1,7 +1,7 @@
 """组合风险指标计算。"""
 
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -16,11 +16,11 @@ class PortfolioRisk:
 
     def returns_matrix(self) -> pd.DataFrame:
         """构建各标的日收益率矩阵。"""
-        returns = {}
+        returns: dict[str, pd.Series[Any]] = {}
         for ticker, df in self.price_data.items():
             if not df.empty and "close" in df.columns:
                 returns[ticker] = df["close"].pct_change().dropna()
-        return pd.DataFrame(returns).dropna()
+        return cast(pd.DataFrame, pd.DataFrame(returns).dropna())
 
     def beta(self, ticker: str, benchmark: str) -> float:
         """计算单票相对基准的 Beta。"""
@@ -31,7 +31,7 @@ class PortfolioRisk:
         var = rets[benchmark].var()
         return float(cov / var) if var else 0.0
 
-    def value_at_risk(self, confidence: float = 0.95) -> dict[str, float]:
+    def value_at_risk(self, confidence: float = 0.95) -> dict[str, Any]:
         """历史模拟法 VaR。"""
         rets = self.returns_matrix()
         if rets.empty:

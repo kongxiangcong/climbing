@@ -58,6 +58,7 @@ web/node_modules/
 web/dist/
 web/.cache/
 web/*.local
+web/public/system-status.json
 
 # OS
 .DS_Store

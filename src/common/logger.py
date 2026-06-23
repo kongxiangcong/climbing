@@ -18,8 +18,8 @@ def get_logger(name: str) -> logging.Logger:
     fmt = settings.get("logging.format", "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s")
     formatter = logging.Formatter(fmt)
 
-    # 控制台输出
-    console = logging.StreamHandler(sys.stdout)
+    # 控制台输出到 stderr，避免与 CLI 的 stdout JSON 输出混杂
+    console = logging.StreamHandler(sys.stderr)
     console.setFormatter(formatter)
     logger.addHandler(console)
 

@@ -1,12 +1,19 @@
 """Yahoo Finance 数据源客户端封装。"""
 
 from pathlib import Path
+from typing import Any
 
 from src.common.config import settings
 from src.common.logger import get_logger
 from src.common.paths import get_data_dir
 
 logger = get_logger(__name__)
+
+
+def _get_data_source_tool() -> Any:
+    """Kimi datasource 工具在运行时被注入，不能作为普通 Python 模块 import。"""
+    tool = __import__("mcp__plugin-kimi-datasource_data")
+    return getattr(tool, "call_data_source_tool")
 
 
 class YahooFinanceClient:
@@ -22,7 +29,7 @@ class YahooFinanceClient:
 
     def fetch_stock_info(self, ticker: str) -> Path:
         """获取公司信息。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_stock_info.csv")
         call_data_source_tool(
@@ -37,7 +44,7 @@ class YahooFinanceClient:
         self, ticker: str, period: str = "1mo", interval: str = "1d"
     ) -> Path:
         """获取历史行情。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_price_{period}_{interval}.csv")
         call_data_source_tool(
@@ -50,7 +57,7 @@ class YahooFinanceClient:
 
     def fetch_financial_statement(self, ticker: str, financial_type: str) -> Path:
         """获取财务报表。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_{financial_type}.csv")
         call_data_source_tool(
@@ -63,7 +70,7 @@ class YahooFinanceClient:
 
     def fetch_recommendations(self, ticker: str) -> Path:
         """获取分析师推荐。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_recommendations.csv")
         call_data_source_tool(

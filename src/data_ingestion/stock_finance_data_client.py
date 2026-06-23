@@ -10,6 +10,12 @@ from src.common.paths import get_data_dir
 logger = get_logger(__name__)
 
 
+def _get_data_source_tool() -> Any:
+    """Kimi datasource 工具在运行时被注入，不能作为普通 Python 模块 import。"""
+    tool = __import__("mcp__plugin-kimi-datasource_data")
+    return getattr(tool, "call_data_source_tool")
+
+
 class StockFinanceDataClient:
     """stock_finance_data API 客户端。"""
 
@@ -23,7 +29,7 @@ class StockFinanceDataClient:
 
     def fetch_stock_info(self, ticker: str) -> Path:
         """获取公司基本信息。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_stock_info.csv")
         call_data_source_tool(
@@ -38,7 +44,7 @@ class StockFinanceDataClient:
         self, ticker: str, report_date: str, statement: str = "all"
     ) -> Path:
         """获取财务报表。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_fs_{report_date}.csv")
         call_data_source_tool(
@@ -63,7 +69,7 @@ class StockFinanceDataClient:
         adjust: str = "forward",
     ) -> Path:
         """获取历史行情。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_price_{start_date}_{end_date}_{interval}.csv")
         call_data_source_tool(
@@ -83,7 +89,7 @@ class StockFinanceDataClient:
 
     def fetch_holder_info(self, ticker: str) -> Path:
         """获取股东信息。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_holder.csv")
         call_data_source_tool(
@@ -96,7 +102,7 @@ class StockFinanceDataClient:
 
     def fetch_announcements(self, ticker: str, start_date: str, end_date: str) -> Path:
         """获取公司公告。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_announcements_{start_date}_{end_date}.csv")
         call_data_source_tool(
@@ -114,7 +120,7 @@ class StockFinanceDataClient:
 
     def fetch_forecast(self, ticker: str) -> Path:
         """获取盈利预测。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_forecast.csv")
         call_data_source_tool(
@@ -129,7 +135,7 @@ class StockFinanceDataClient:
         self, ticker: str, report_date: str, category: str
     ) -> Path:
         """获取财务指标。"""
-        from mcp__plugin-kimi-datasource_data import call_data_source_tool
+        call_data_source_tool = _get_data_source_tool()
 
         path = self._save_path(f"{ticker}_finidx_{category}_{report_date}.csv")
         call_data_source_tool(

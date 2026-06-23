@@ -1,0 +1,40 @@
+{
+  "summary": "京东方 A 深度研报占位。",
+  "six_dimensions": {
+    "industry": "半导体显示面板行业，周期性较强。",
+    "business": "全球面板龙头，LCD 市占率领先。",
+    "financials": "营收规模稳定，盈利能力受价格周期影响。",
+    "valuation": "当前 PB 处于历史低位。",
+    "risk": "面板价格波动、技术迭代风险。",
+    "catalyst": "OLED 渗透率提升、行业稼动率回升。"
+  },
+  "valuation": {
+    "method": "PE-band",
+    "value_low": 4.5,
+    "value_high": 6.0,
+    "assumptions": [
+      "2026 年行业供需趋于平衡"
+    ]
+  },
+  "risks": [
+    "面板价格超预期下跌",
+    "OLED 替代进度不及预期"
+  ],
+  "assumptions": [
+    "LCD 需求保持平稳",
+    "公司 OLED 业务放量"
+  ],
+  "invalidation_conditions": [
+    "季度营收同比下滑超过 20%",
+    "行业稼动率跌破 60%"
+  ],
+  "target_price_low": 4.8,
+  "target_price_high": 6.2,
+  "pdf_path": null,
+  "references": [
+    {
+      "title": "公司年报",
+      "url": ""
+    }
+  ]
+}
