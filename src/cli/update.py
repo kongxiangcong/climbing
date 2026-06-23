@@ -16,10 +16,12 @@ from src.common.logger import get_logger
 from src.common.models import (
     IndexMetric,
     MarketSnapshot,
+    SectorHeat,
     SourceMetadata,
 )
 from src.common.paths import get_data_dir
 from src.common.snapshot_io import write_snapshot
+from src.data_standardization.market_data import build_market_snapshot_data
 from src.data_standardization.security_master import SecurityMaster
 from src.data_standardization.versioner import generate_version
 
@@ -36,24 +38,26 @@ def _load_fixture(name: str) -> dict[str, Any]:
     return {}
 
 
-def _market_snapshot() -> tuple[Path, str]:
-    """生成市场事实快照。"""
-    fixture = _load_fixture("market_snapshot.json")
-    version = generate_version(fixture)
-    trade_date = datetime.strptime(
-        fixture.get("trade_date", datetime.now().strftime("%Y-%m-%d")),
-        "%Y-%m-%d",
-    ).date()
+def _market_snapshot(trade_date: datetime | None = None) -> tuple[Path, str]:
+    """生成市场事实快照。
+
+    流程：从 fixture 或可选数据源拉取标准化市场数据 → 生成 MarketSnapshot
+    → 写入 ``data/reports/market/{version}/snapshot.json``。
+    """
+    dt = trade_date.date() if trade_date else None
+    data = build_market_snapshot_data(trade_date=dt)
+
+    version = generate_version(data)
 
     indices = [
         IndexMetric(
             ticker=m["ticker"],
             name=m["name"],
-            close=Decimal(str(m["close"])),
-            change_pct=Decimal(str(m.get("change_pct", 0))),
+            close=m["close"],
+            change_pct=m["change_pct"],
             volume=m.get("volume"),
         )
-        for m in fixture.get("indices", [])
+        for m in data["indices"]
     ]
     if not indices:
         indices = [
@@ -65,27 +69,72 @@ def _market_snapshot() -> tuple[Path, str]:
             )
         ]
 
+    sector_heat = [
+        SectorHeat(
+            name=s["name"],
+            score=s["score"],
+            change_pct=s.get("change_pct"),
+        )
+        for s in data["sector_heat"]
+    ]
+
+    metadata: SourceMetadata = data["metadata"]
+    metadata.retrieved_at = datetime.now()
+
     snapshot = MarketSnapshot(
         snapshot_id=f"market-{version}",
         version=version,
-        trade_date=trade_date,
+        trade_date=data["trade_date"],
         indices=indices,
-        breadth=fixture.get("breadth", {"advancers": 0, "decliners": 0, "unchanged": 0}),
-        total_turnover=Decimal(str(fixture.get("total_turnover", 0))),
-        sector_heat=fixture.get("sector_heat", []),
-        margin_balance=Decimal(str(fixture.get("margin_balance", 0))) if "margin_balance" in fixture else None,
-        northbound_flow=Decimal(str(fixture.get("northbound_flow", 0))) if "northbound_flow" in fixture else None,
-        etf_flow={k: Decimal(str(v)) for k, v in fixture.get("etf_flow", {}).items()},
-        sentiment_score=fixture.get("sentiment_score"),
-        risk_appetite=fixture.get("risk_appetite"),
-        metadata=SourceMetadata(
-            source="climbing.update.daily",
-            retrieved_at=datetime.now(),
-            version="1.0.0",
-        ),
+        breadth=data["breadth"],
+        total_turnover=data["total_turnover"],
+        sector_heat=sector_heat,
+        margin_balance=data["margin_balance"],
+        northbound_flow=data["northbound_flow"],
+        etf_flow=data["etf_flow"],
+        sentiment_score=data["sentiment_score"],
+        risk_appetite=data["risk_appetite"],
+        metadata=metadata,
     )
-    path = write_snapshot(snapshot, "market")
+    path = write_snapshot(snapshot, "market", use_version_dir=True)
+    _write_web_market_summary(snapshot)
     return path, version
+
+
+def _write_web_market_summary(snapshot: MarketSnapshot) -> Path:
+    """将最新 MarketSnapshot 摘要写入 web/public，供前端静态读取。"""
+    web_public = settings.project_root / "web" / "public"
+    web_public.mkdir(parents=True, exist_ok=True)
+    web_path = web_public / "market-summary.json"
+
+    temperature_label = snapshot.risk_appetite or "未知"
+    temperature_score = snapshot.sentiment_score
+
+    summary = {
+        "last_snapshot_at": snapshot.created_at.isoformat(),
+        "version": snapshot.version,
+        "trade_date": snapshot.trade_date.isoformat(),
+        "indices": [
+            {
+                "ticker": i.ticker,
+                "name": i.name,
+                "close": str(i.close),
+                "change_pct": str(i.change_pct),
+            }
+            for i in snapshot.indices
+        ],
+        "total_turnover": str(snapshot.total_turnover) if snapshot.total_turnover is not None else None,
+        "breadth": snapshot.breadth,
+        "sector_heat": [
+            {"name": s.name, "score": s.score, "change_pct": str(s.change_pct) if s.change_pct is not None else None}
+            for s in snapshot.sector_heat
+        ],
+        "sentiment_score": temperature_score,
+        "temperature_label": temperature_label,
+    }
+    web_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.info("Wrote market summary for web -> %s", web_path)
+    return web_path
 
 
 def _portfolio_snapshot() -> tuple[Path, str]:
@@ -129,7 +178,17 @@ def _write_system_status(snapshots: list[dict[str, Any]]) -> Path:
 def daily_update(ctx: typer.Context) -> None:
     """收盘后一键更新：市场事实、持仓事实。"""
     logger.info("Starting daily update")
-    market_path, market_version = _market_snapshot()
+    try:
+        market_path, market_version = _market_snapshot()
+    except RuntimeError as exc:
+        logger.error("Market data fetch failed: %s", exc)
+        format_result(
+            ctx,
+            success=False,
+            message=f"市场数据刷新失败：{exc}",
+        )
+        raise typer.Exit(code=1) from exc
+
     portfolio_path, portfolio_version = _portfolio_snapshot()
     snapshots: list[dict[str, Any]] = [
         {"report_type": "market", "snapshot_path": str(market_path), "version": market_version},

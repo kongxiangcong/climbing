@@ -52,14 +52,62 @@ def test_update_daily_generates_market_and_portfolio_snapshots() -> None:
     assert "market" in snapshots
     assert "portfolio" in snapshots
 
-    market = read_snapshot(Path(snapshots["market"]["snapshot_path"]), MarketSnapshot)
+    # 命令输出为 JSON，包含两个 snapshot 的路径和版本
+    market_info = snapshots["market"]
+    portfolio_info = snapshots["portfolio"]
+    assert "snapshot_path" in market_info
+    assert "version" in market_info
+    assert "snapshot_path" in portfolio_info
+    assert "version" in portfolio_info
+
+    market_path = Path(market_info["snapshot_path"])
+    # MarketSnapshot 写入 data/reports/market/{version}/snapshot.json
+    assert market_path.parent.name == market_info["version"]
+    assert market_path.name == "snapshot.json"
+
+    market = read_snapshot(market_path, MarketSnapshot)
     assert market.report_type == "market"
     assert market.indices
+    assert market.total_turnover is not None
+    assert market.breadth
+    assert {"advancers", "decliners", "unchanged"}.issubset(set(market.breadth))
+    assert market.sector_heat
+    assert market.margin_balance is not None
+    assert market.northbound_flow is not None
+    assert market.etf_flow is not None
+    assert market.sentiment_score is not None
+    assert market.risk_appetite is not None
+    assert market.metadata.source
+    assert market.metadata.retrieved_at is not None
 
     portfolio = read_snapshot(
-        Path(snapshots["portfolio"]["snapshot_path"]), PortfolioSnapshot
+        Path(portfolio_info["snapshot_path"]), PortfolioSnapshot
     )
     assert portfolio.report_type == "portfolio"
+
+
+def test_update_daily_fails_gracefully_when_market_fixture_missing(
+    tmp_path: Path,
+) -> None:
+    fixture = PROJECT_ROOT / "tests" / "fixtures" / "market_snapshot.json"
+    backup = tmp_path / "market_snapshot.json.bak"
+    shutil.copy2(fixture, backup)
+    try:
+        fixture.unlink()
+        result = subprocess.run(
+            [PYTHON, "-m", "src.cli.main", "--format", "json", "update", "daily"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        data = json.loads(result.stdout)
+        assert data["success"] is False
+        assert "No market data provider succeeded" in data["message"]
+    finally:
+        shutil.copy2(backup, fixture)
 
 
 def test_update_daily_review_generates_daily_review_snapshot() -> None:

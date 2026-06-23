@@ -60,6 +60,8 @@ web/.cache/
 web/*.local
 web/public/system-status.json
 web/public/security-master.json
+web/public/market-summary.json
+web/public/portfolio-summary.json
 
 # OS
 .DS_Store

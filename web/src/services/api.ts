@@ -93,6 +93,37 @@ export async function fetchMacroReport() {
   return res.json()
 }
 
+export interface MarketSummary {
+  last_snapshot_at: string
+  version: string
+  trade_date: string
+  indices: Array<{
+    ticker: string
+    name: string
+    close: string
+    change_pct: string
+  }>
+  total_turnover: string | null
+  breadth: Record<string, number>
+  sector_heat: Array<{
+    name: string
+    score: number
+    change_pct: string | null
+  }>
+  sentiment_score: number | null
+  temperature_label: string
+}
+
+export async function fetchMarketSummary(): Promise<MarketSummary | null> {
+  try {
+    const res = await fetch('/market-summary.json')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
+
 export async function fetchSystemStatus(): Promise<SystemStatus | null> {
   try {
     const res = await fetch('/system-status.json')
