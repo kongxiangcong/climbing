@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ ticker }} 深度研报</title>
+  <style>{{ css_content | safe }}</style>
+</head>
+<body>
+  <div class="report-container">
+    <div class="running-header-left">Kimi Research — Equity Research</div>
+    <div class="running-header-right">{{ ticker }}</div>
+    <div class="running-footer-left">{{ report_date }}</div>
+    <div class="running-footer-right">Page <span class="page-number"></span></div>
+
+    <div class="cover-split">
+      <div class="kimi-brand-bar">
+        <span class="kimi-logo">Kimi Research</span>
+        <span class="kimi-tagline">AI-Powered Equity Research</span>
+      </div>
+      <div class="cover-main">
+        <div class="header-top">
+          <div class="header-company">
+            <span class="header-name">{{ name or ticker }}</span>
+            <span class="header-code">{{ ticker }}</span>
+          </div>
+        </div>
+        <h1 class="header-main-title">{{ title or "个股深度研报占位" }}</h1>
+        <div class="cover-rating-line">
+          <span class="cover-rating-badge">{{ rating or "HOLD" }}</span>
+        </div>
+        <div class="cover-viewpoint">{{ summary or "核心观点待补充。" }}</div>
+      </div>
+      <div class="cover-sidebar">
+        <div class="sidebar-title">关键数据</div>
+        <div class="key-data-grid">
+          <div class="kd-group-header">市场</div>
+          <div class="kd-row"><span class="kd-label">代码</span><span class="kd-value">{{ ticker }}</span></div>
+          <div class="kd-row"><span class="kd-label">报告日期</span><span class="kd-value">{{ report_date }}</span></div>
+          <div class="kd-group-header">估值</div>
+          <div class="kd-row"><span class="kd-label">目标价下限</span><span class="kd-value">{{ target_low or "-" }}</span></div>
+          <div class="kd-row"><span class="kd-label">目标价上限</span><span class="kd-value">{{ target_high or "-" }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="exec-summary">
+      <div class="exec-summary-title">摘要</div>
+      <div class="exec-summary-grid">
+        <div class="exec-summary-item">
+          <span class="es-label">投资论点</span>
+          <span class="es-content">{{ summary or "待补充" }}</span>
+        </div>
+        <div class="exec-summary-item">
+          <span class="es-label">关键风险</span>
+          <span class="es-content">{{ risks | join("；") or "待补充" }}</span>
+        </div>
+        <div class="exec-summary-item">
+          <span class="es-label">估值与目标价</span>
+          <span class="es-content">{{ valuation_method or "待补充" }}：{{ target_low or "-" }} - {{ target_high or "-" }}</span>
+        </div>
+        <div class="exec-summary-item">
+          <span class="es-label">失效条件</span>
+          <span class="es-content">{{ invalidation_conditions | join("；") or "待补充" }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="module-row">
+      <h2 class="section-title">六维分析</h2>
+      {% for key, value in six_dimensions.items() %}
+      <h3>{{ key }}</h3>
+      <p>{{ value }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="module-row">
+      <h2 class="section-title">估值</h2>
+      <p>估值方法：{{ valuation_method or "-" }}</p>
+      <p>区间：{{ target_low or "-" }} - {{ target_high or "-" }}</p>
+      <p>假设：{{ valuation_assumptions | join("；") or "-" }}</p>
+    </div>
+
+    <div class="module-row">
+      <h2 class="section-title">风险与假设</h2>
+      <h3>风险</h3>
+      <ul>
+        {% for risk in risks %}<li>{{ risk }}</li>{% endfor %}
+      </ul>
+      <h3>核心假设</h3>
+      <ul>
+        {% for assumption in assumptions %}<li>{{ assumption }}</li>{% endfor %}
+      </ul>
+      <h3>失效条件</h3>
+      <ul>
+        {% for condition in invalidation_conditions %}<li>{{ condition }}</li>{% endfor %}
+      </ul>
+    </div>
+
+    <div class="module-row">
+      <h2 class="section-title">参考文献与数据来源</h2>
+      <div class="references-list">
+        {% for ref in references %}
+        <div class="ref-item">[{{ loop.index }}] {{ ref.title }}{% if ref.url %} <a href="{{ ref.url }}">{{ ref.url }}</a>{% endif %}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      本报告由 Climbing / Kimi Research 生成，仅供个人研究参考，不构成投资建议。投资有风险，决策需谨慎。
+    </div>
+  </div>
+</body>
+</html>

@@ -120,12 +120,23 @@ def test_update_daily_review_generates_daily_review_snapshot() -> None:
 
 def test_analyze_stock_generates_research_snapshot() -> None:
     ticker = "000725.SZ"
-    data = _run("analyze", "stock", ticker)
+    data = _run("analyze", "stock", ticker, "--mock")
     assert data["success"] is True
     snapshot_path = Path(data["snapshot_path"])
+    # 新路径结构: data/reports/equity/{ticker}/{version}/snapshot.json
+    assert snapshot_path.name == "snapshot.json"
+    assert snapshot_path.parent.name != ticker
+    assert snapshot_path.exists()
+
     research = read_snapshot(snapshot_path, ResearchSnapshot)
     assert research.report_type == "research"
     assert research.ticker == ticker
+
+    report_dir = snapshot_path.parent
+    assert (report_dir / "report.pdf").exists()
+    assert (report_dir / "qa_check.json").exists()
+    assert (report_dir / "references.json").exists()
+    assert research.pdf_path == str(report_dir / "report.pdf")
 
 
 def test_portfolio_transactions_generates_portfolio_snapshot(tmp_path: Path) -> None:
