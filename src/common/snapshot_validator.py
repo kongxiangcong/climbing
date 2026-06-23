@@ -329,11 +329,14 @@ class SnapshotValidator:
             return
 
         total_prob = sum(s.probability for s in scenarios.values())
-        prob_ok = 0.99 <= total_prob <= 1.01 or total_prob == 0
+        prob_ok = 0.99 <= total_prob <= 1.01
         passed = len(scenarios) >= 3 and prob_ok
         details: list[str] = []
-        if not prob_ok and total_prob != 0:
-            details.append(f"情景概率之和为 {total_prob:.2f}，建议归一化到 1.0")
+        if not prob_ok:
+            if total_prob == 0:
+                details.append("所有情景概率均为 0，请为 optimistic / base_case / pessimistic 分配有效概率")
+            else:
+                details.append(f"情景概率之和为 {total_prob:.2f}，建议归一化到 1.0")
 
         self.results.append(
             CheckResult(

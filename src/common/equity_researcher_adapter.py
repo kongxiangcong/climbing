@@ -141,7 +141,7 @@ def build_research_snapshot_from_skill_output(
                         description=raw["capital_market_structure"].get("description", ""),
                         data_support=raw["capital_market_structure"].get("data_support", ""),
                     )
-                    if raw.get("capital_market_structure")
+                    if isinstance(raw.get("capital_market_structure"), dict)
                     else None
                 ),
             )
@@ -328,8 +328,16 @@ def build_research_snapshot_from_skill_output(
             stock_csv_path=spd_raw.get("stock_csv_path"),
             benchmark_csv_path=spd_raw.get("benchmark_csv_path"),
             current_price=spd_raw.get("current_price", 0.0),
-            high_52w=spd_raw.get("high_52w") or spd_raw.get("52w_high") or 0.0,
-            low_52w=spd_raw.get("low_52w") or spd_raw.get("52w_low") or 0.0,
+            high_52w=(
+                spd_raw["high_52w"]
+                if spd_raw.get("high_52w") is not None
+                else spd_raw.get("52w_high") if spd_raw.get("52w_high") is not None else 0.0
+            ),
+            low_52w=(
+                spd_raw["low_52w"]
+                if spd_raw.get("low_52w") is not None
+                else spd_raw.get("52w_low") if spd_raw.get("52w_low") is not None else 0.0
+            ),
             market_cap=spd_raw.get("market_cap", 0.0),
             pe_ttm=spd_raw.get("pe_ttm", 0.0),
             pb=spd_raw.get("pb", 0.0),

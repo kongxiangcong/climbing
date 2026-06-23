@@ -100,6 +100,8 @@ def _build_minor_refresh_snapshot(
     # 用 fixture 中的价格/估值覆盖（如有）
     if "stock_price_data" in fixture:
         data["stock_price_data"] = fixture["stock_price_data"]
+    if "valuation_data" in fixture:
+        data["valuation_data"] = fixture["valuation_data"]
     if "valuation" in fixture:
         data["valuation"] = fixture["valuation"]
     if "target_price_low" in fixture:
@@ -206,6 +208,14 @@ def analyze_stock(
 
     cache = ResearchCache(ticker)
     tier, existing_snapshot = cache.determine_tier()
+
+    if force and refresh_only:
+        format_result(
+            ctx,
+            success=False,
+            message="--force 与 --refresh-only 不能同时使用",
+        )
+        raise typer.Exit(code=1)
 
     if not force and tier == CacheTier.FRESH:
         latest_path = cache.latest_snapshot_path()
