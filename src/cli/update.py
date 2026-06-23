@@ -1,6 +1,7 @@
 """数据更新 CLI。"""
 
 import json
+import shutil
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -21,6 +22,7 @@ from src.common.models import (
 )
 from src.common.paths import get_data_dir
 from src.common.snapshot_io import write_snapshot
+from src.data_standardization.security_master import SecurityMaster
 from src.data_standardization.versioner import generate_version
 
 app = typer.Typer()
@@ -229,4 +231,78 @@ def daily_review(ctx: typer.Context) -> None:
         message="Daily review snapshot generated.",
         snapshot_path=path,
         version=version,
+    )
+
+
+@app.command("securities")
+def update_securities(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(False, "--dry-run", help="仅预览，不写入文件"),
+    manual_ticker: list[str] = typer.Option(
+        [],
+        "--manual-ticker",
+        help="手动指定未识别代码，格式 CODE:MARKET:NAME[:ASSET_CLASS]",
+    ),
+) -> None:
+    """从 config/tickers.yaml 刷新证券主数据表。"""
+    logger.info("Updating security master")
+
+    manual_map: dict[str, dict[str, Any]] = {}
+    for mt in manual_ticker:
+        parts = mt.split(":")
+        if len(parts) < 3:
+            format_result(
+                ctx,
+                success=False,
+                message=(
+                    f"手动代码格式错误：{mt}，"
+                    "应为 CODE:MARKET:NAME[:ASSET_CLASS]"
+                ),
+            )
+            raise typer.Exit(code=1)
+        code, market, name = parts[0].strip().upper(), parts[1].strip().upper(), parts[2].strip()
+        asset_class = parts[3].strip().lower() if len(parts) > 3 else "stock"
+        manual_map[code] = {"market": market, "name": name, "asset_class": asset_class}
+
+    master = SecurityMaster()
+    path, securities, unrecognized, version = master.add_from_watchlist(
+        manual_tickers=manual_map, dry_run=dry_run
+    )
+
+    if unrecognized:
+        msg = (
+            f"以下代码无法自动识别，请确认后重试：{', '.join(unrecognized)}。"
+            "可使用 --manual-ticker CODE:MARKET:NAME 指定。"
+        )
+        format_result(
+            ctx,
+            success=False,
+            message=msg,
+            extra={"needs_confirmation": True, "unrecognized_tickers": unrecognized},
+        )
+        raise typer.Exit(code=1)
+
+    if dry_run:
+        format_result(
+            ctx,
+            success=True,
+            message=f"预览：将写入 {len(securities)} 条证券。",
+            extra={"securities": [s.ticker for s in securities]},
+        )
+        return
+
+    # 同时输出一份 web/public 下的 JSON，供前端静态读取
+    web_public = settings.project_root / "web" / "public"
+    web_public.mkdir(parents=True, exist_ok=True)
+    web_json_path = web_public / "security-master.json"
+    shutil.copy2(master.json_path, web_json_path)
+    logger.info("Copied security master JSON -> %s", web_json_path)
+
+    format_result(
+        ctx,
+        success=True,
+        message=f"证券主数据刷新完成：{len(securities)} 条。",
+        snapshot_path=path,
+        version=version,
+        extra={"securities": [s.ticker for s in securities]},
     )

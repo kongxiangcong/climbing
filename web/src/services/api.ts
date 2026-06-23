@@ -10,6 +10,26 @@ export interface SystemStatus {
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
+export interface SecurityMasterItem {
+  ticker: string
+  name: string
+  market: string
+  asset_class?: string
+  sector?: string
+  industry?: string
+  tags: string[]
+}
+
+export async function fetchSecurityMaster(): Promise<SecurityMasterItem[]> {
+  try {
+    const res = await fetch('/security-master.json')
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
+}
+
 export async function fetchStockReport(ticker: string) {
   const res = await fetch(`${API_BASE}/reports/stock/${ticker}`)
   if (!res.ok) throw new Error('Failed to fetch stock report')

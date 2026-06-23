@@ -26,6 +26,7 @@ class Security(BaseModel):
     ticker: str
     name: str
     market: str
+    asset_class: str | None = None
     sector: str | None = None
     industry: str | None = None
     tags: list[str] = Field(default_factory=list)

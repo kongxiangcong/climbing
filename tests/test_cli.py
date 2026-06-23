@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 
 from src.common.config import settings
@@ -109,3 +110,115 @@ def test_plan_create_and_check_generates_trade_plan_and_review() -> None:
 def test_version_returns_json() -> None:
     data = _run("version")
     assert "version" in data
+
+
+def test_update_securities_generates_security_master() -> None:
+    data = _run("update", "securities")
+    assert data["success"] is True
+    snapshot_path = Path(data["snapshot_path"])
+    assert snapshot_path.exists()
+    assert snapshot_path.name == "security_master.parquet"
+
+    df = pd.read_parquet(snapshot_path)
+    required = {
+        "ticker",
+        "name",
+        "market",
+        "sector",
+        "industry",
+        "tags",
+        "source",
+        "retrieved_at",
+        "version",
+    }
+    assert required.issubset(set(df.columns))
+    assert not df.empty
+    assert "000725.SZ" in df["ticker"].values
+    assert "600519.SH" in df["ticker"].values
+
+
+def test_update_securities_copies_json_for_web() -> None:
+    data = _run("update", "securities")
+    assert data["success"] is True
+    web_json = settings.project_root / "web" / "public" / "security-master.json"
+    assert web_json.exists()
+    loaded = json.loads(web_json.read_text(encoding="utf-8"))
+    assert isinstance(loaded, list)
+    assert any(item["ticker"] == "000725.SZ" for item in loaded)
+
+
+def test_update_securities_manual_ticker_for_unrecognized() -> None:
+    # 临时加入无法识别的代码，通过 --manual-ticker 确认后应被写入
+    tickers_path = settings.project_root / "config" / "tickers.yaml"
+    original = tickers_path.read_text(encoding="utf-8")
+    try:
+        import yaml
+
+        config = yaml.safe_load(original) or {}
+        config["watchlist"].append({"ticker": "UNKNOWN", "name": "未知"})
+        tickers_path.write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
+
+        data = _run(
+            "update",
+            "securities",
+            "--manual-ticker",
+            "UNKNOWN:SZ:手动标的:stock",
+        )
+        assert data["success"] is True
+        web_json = settings.project_root / "web" / "public" / "security-master.json"
+        loaded = json.loads(web_json.read_text(encoding="utf-8"))
+        assert any(item["ticker"] == "UNKNOWN.SZ" for item in loaded)
+    finally:
+        tickers_path.write_text(original, encoding="utf-8")
+
+
+def test_update_securities_dry_run_does_not_write_file() -> None:
+    import pandas as pd
+
+    # 先正常写入，获取路径
+    data = _run("update", "securities")
+    assert data["success"] is True
+    snapshot_path = Path(data["snapshot_path"])
+    mtime_before = snapshot_path.stat().st_mtime
+
+    # dry-run 不应更新文件
+    dry = _run("update", "securities", "--dry-run")
+    assert dry["success"] is True
+    assert "snapshot_path" not in dry
+    assert snapshot_path.stat().st_mtime == mtime_before
+
+
+def test_update_securities_version_matches_parquet() -> None:
+    data = _run("update", "securities")
+    assert data["success"] is True
+    version = data["version"]
+    df = pd.read_parquet(Path(data["snapshot_path"]))
+    assert (df["version"] == version).all()
+
+
+def test_update_securities_reports_unrecognized_for_confirmation() -> None:
+    # 临时修改 tickers.yaml，加入无法识别的代码
+    tickers_path = settings.project_root / "config" / "tickers.yaml"
+    original = tickers_path.read_text(encoding="utf-8")
+    try:
+        import yaml
+
+        config = yaml.safe_load(original) or {}
+        config["watchlist"].append({"ticker": "NOTATICKER", "name": "未知"})
+        tickers_path.write_text(yaml.dump(config, allow_unicode=True), encoding="utf-8")
+
+        result = subprocess.run(
+            [PYTHON, "-m", "src.cli.main", "--format", "json", "update", "securities"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        data = json.loads(result.stdout)
+        assert data["success"] is False
+        assert data.get("needs_confirmation") is True
+        assert "NOTATICKER" in data.get("unrecognized_tickers", [])
+    finally:
+        tickers_path.write_text(original, encoding="utf-8")
