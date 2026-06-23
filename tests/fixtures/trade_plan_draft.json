@@ -1,0 +1,57 @@
+{
+  "name": "000725.SZ 交易计划",
+  "direction": "long",
+  "time_window": "3-6m",
+  "research_version": "20260623233216-5748f5",
+  "entry_logic": "基于研报核心观点：LCD 龙头筑底，OLED 放量可期；当前估值处于历史低位，若行业稼动率回升、面板价格温和上涨，公司盈利弹性较大。",
+  "exit_logic": "达到目标价区间上限或触发失效条件时退出",
+  "target_price_low": 4.8,
+  "target_price_high": 6.2,
+  "stop_loss": 4.46,
+  "take_profit": 6.2,
+  "position_limit": 10,
+  "initial_position_pct": 3,
+  "max_position_pct": 10,
+  "risk_budget": 2,
+  "expected_return": 15,
+  "invalidation_conditions": [
+    "季度营收同比下滑超过 20%",
+    "行业稼动率跌破 60%",
+    "OLED 毛利率连续两季度低于 5%",
+    "面板价格连续两季度环比下跌超过 10%"
+  ],
+  "alternative_scenarios": [
+    "价格快速突破上限：考虑分批止盈",
+    "行业景气度低于预期：减仓至观察仓位"
+  ],
+  "triggers": [
+    "价格进入目标价区间下限",
+    "财报验证核心假设",
+    "板块热度持续处于前 20%"
+  ],
+  "batch_strategy": [
+    {
+      "batch_id": "1",
+      "target_price_low": "4.8",
+      "target_price_high": "5.5",
+      "allocation_pct": "40",
+      "trigger_condition": "价格进入目标区间且成交量放大",
+      "notes": "首批建仓"
+    },
+    {
+      "batch_id": "2",
+      "target_price_low": "5.5",
+      "target_price_high": "6.2",
+      "allocation_pct": "60",
+      "trigger_condition": "基本面催化剂兑现或价格突破中枢",
+      "notes": "加仓至目标仓位"
+    }
+  ],
+  "review_frequency": "weekly",
+  "notes": "mock draft generated from research snapshot",
+  "assumptions": [
+    "LCD 需求保持平稳",
+    "公司 OLED 业务放量",
+    "2026 年行业供需趋于平衡"
+  ]
+}

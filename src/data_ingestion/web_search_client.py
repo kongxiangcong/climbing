@@ -17,7 +17,7 @@ class WebSearchClient:
     def search(self, query: str, limit: int = 5, include_content: bool = False) -> dict[str, Any]:
         """执行网络搜索。仅在 Kimi Code 运行时环境中可用。"""
         try:
-            from tools import WebSearch  # type: ignore[import-not-found]
+            from tools import WebSearch
 
             result = WebSearch(query=query, limit=limit, include_content=include_content)
             logger.info("Web searched '%s'", query)

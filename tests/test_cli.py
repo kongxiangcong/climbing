@@ -187,19 +187,104 @@ def test_portfolio_transactions_generates_portfolio_snapshot(tmp_path: Path) -> 
 
 
 def test_plan_create_and_check_generates_trade_plan_and_review() -> None:
-    create_data = _run("plan", "create", "000725.SZ", "--name", "integration-test-plan")
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "integration-test-plan", "--mock"
+    )
     assert create_data["success"] is True
     plan_id = create_data["plan_id"]
     plan_path = Path(create_data["snapshot_path"])
     plan = TradePlan.model_validate_json(plan_path.read_text(encoding="utf-8"))
     assert plan.ticker == "000725.SZ"
+    assert plan.status.value == "draft"
+    assert plan.plan_version == "1"
+    assert plan.batch_strategy
 
-    check_data = _run("plan", "check", plan_id)
+    # check 生成 PlanReviewSnapshot
+    check_data = _run("plan", "check", plan_id, "--latest-price", "5.2")
     assert check_data["success"] is True
     review_path = Path(check_data["snapshot_path"])
     review = read_snapshot(review_path, PlanReviewSnapshot)
     assert review.report_type == "plan_review"
     assert review.plan_id == plan_id
+
+
+def test_plan_create_with_confirm_activates_plan() -> None:
+    create_data = _run(
+        "plan",
+        "create",
+        "000725.SZ",
+        "--name",
+        "confirmed-test-plan",
+        "--mock",
+        "--confirm",
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+    plan_path = Path(create_data["snapshot_path"])
+    plan = TradePlan.model_validate_json(plan_path.read_text(encoding="utf-8"))
+    assert plan.status.value == "active"
+    assert plan.plan_version == "2"
+
+
+def test_plan_transition_requires_confirmation() -> None:
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "transition-test", "--mock"
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    # 不加 --confirm 必须失败
+    result = subprocess.run(
+        [
+            PYTHON,
+            "-m",
+            "src.cli.main",
+            "--format",
+            "json",
+            "plan",
+            "transition",
+            plan_id,
+            "active",
+        ],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    data = json.loads(result.stdout)
+    assert data["success"] is False
+    assert data.get("requires_confirmation") is True
+
+    # 加 --confirm 成功迁移
+    transition_data = _run(
+        "plan", "transition", plan_id, "active", "--confirm", "--reason", "用户确认"
+    )
+    assert transition_data["success"] is True
+    plan = TradePlan.model_validate_json(
+        Path(transition_data["snapshot_path"]).read_text(encoding="utf-8")
+    )
+    assert plan.status.value == "active"
+    assert plan.plan_version == "2"
+    assert any(entry.to_status.value == "active" for entry in plan.audit_log)
+
+
+def test_plan_show_and_list() -> None:
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "list-test", "--mock", "--confirm"
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    show_data = _run("plan", "show", plan_id)
+    assert show_data["success"] is True
+    assert show_data["plan_id"] == plan_id
+    assert show_data["status"] == "active"
+
+    list_data = _run("plan", "list")
+    assert list_data["success"] is True
+    assert any(p["plan_id"] == plan_id for p in list_data["plans"])
 
 
 def test_version_returns_json() -> None:

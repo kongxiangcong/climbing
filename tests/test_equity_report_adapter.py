@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+from typing import Any
+
 import pytest
 
 from src.common.equity_researcher_adapter import build_research_snapshot_from_skill_output
@@ -10,12 +12,13 @@ from src.common.models import ResearchSnapshot
 
 
 @pytest.fixture
-def full_fixture() -> dict:
+def full_fixture() -> dict[str, Any]:
     path = Path(__file__).parent / "fixtures" / "research_snapshot_full.json"
-    return json.loads(path.read_text(encoding="utf-8"))
+    data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return data
 
 
-def test_adapter_maps_all_thirteen_sections(full_fixture: dict) -> None:
+def test_adapter_maps_all_thirteen_sections(full_fixture: dict[str, Any]) -> None:
     snapshot = build_research_snapshot_from_skill_output(
         ticker="000725.SZ",
         version="20260623120000-abc123",

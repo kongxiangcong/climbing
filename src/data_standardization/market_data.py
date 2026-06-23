@@ -80,7 +80,7 @@ class AkshareMarketProvider(MarketDataProvider):
 
     def fetch(self, trade_date: date | None = None) -> dict[str, Any] | None:
         try:
-            import akshare as ak  # type: ignore[import-not-found]
+            import akshare as ak
         except ImportError:
             logger.debug("akshare not installed, skipping")
             return None
@@ -143,7 +143,7 @@ class KimiDatasourceMarketProvider(MarketDataProvider):
 
     def fetch(self, trade_date: date | None = None) -> dict[str, Any] | None:
         try:
-            from kimi_datasource import DataSource  # type: ignore
+            from kimi_datasource import DataSource
         except ImportError:
             logger.debug("kimi-datasource not installed, skipping")
             return None

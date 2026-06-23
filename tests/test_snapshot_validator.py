@@ -3,10 +3,13 @@
 import json
 from pathlib import Path
 
+from datetime import datetime
+from decimal import Decimal
+
 import pytest
 
 from src.common.equity_researcher_adapter import build_research_snapshot_from_skill_output
-from src.common.models import ResearchSnapshot
+from src.common.models import ResearchSnapshot, SourceMetadata, Valuation
 from src.common.snapshot_validator import SnapshotValidator
 
 
@@ -36,7 +39,7 @@ def test_validator_fails_incomplete_snapshot() -> None:
         version="v1",
         ticker="000000.SH",
         summary="占位",
-        metadata={"source": "test", "retrieved_at": "2026-06-23T12:00:00", "version": "1.0.0"},
+        metadata=SourceMetadata(source="test", retrieved_at=datetime.fromisoformat("2026-06-23T12:00:00"), version="1.0.0"),
     )
     validator = SnapshotValidator(snapshot)
     validator.run_all()
@@ -59,10 +62,10 @@ def test_validator_backward_compatible_with_legacy_fields() -> None:
         risks=["risk"],
         assumptions=["assumption"],
         invalidation_conditions=["condition"],
-        valuation={"method": "PE", "value_low": 4.0, "value_high": 6.0},
-        target_price_low=4.5,
-        target_price_high=6.0,
-        metadata={"source": "test", "retrieved_at": "2026-06-23T12:00:00", "version": "1.0.0"},
+        valuation=Valuation(method="PE", value_low=Decimal("4.0"), value_high=Decimal("6.0")),
+        target_price_low=Decimal("4.5"),
+        target_price_high=Decimal("6.0"),
+        metadata=SourceMetadata(source="test", retrieved_at=datetime.fromisoformat("2026-06-23T12:00:00"), version="1.0.0"),
     )
     validator = SnapshotValidator(snapshot)
     validator.run_all()

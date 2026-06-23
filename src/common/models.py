@@ -94,27 +94,84 @@ class TradePlanStatus(str, Enum):
     REVIEWED = "reviewed"
 
 
+class TradeDirection(str, Enum):
+    """交易方向。"""
+
+    LONG = "long"
+    SHORT = "short"
+
+
+class TradeBatch(BaseModel):
+    """分批建仓 / 止盈策略。"""
+
+    batch_id: str = ""
+    target_price: Decimal | None = None
+    target_price_low: Decimal | None = None
+    target_price_high: Decimal | None = None
+    allocation_pct: Decimal = Field(
+        default=Decimal("25"), ge=Decimal("0"), le=Decimal("100")
+    )
+    trigger_condition: str | None = None
+    notes: str | None = None
+
+
+class PlanExecutionRecord(BaseModel):
+    """计划执行记录，由真实交易流水关联生成。"""
+
+    executed_at: datetime = Field(default_factory=datetime.now)
+    transaction_id: str
+    ticker: str
+    side: str
+    quantity: int = Field(ge=1)
+    price: Decimal = Field(ge=Decimal("0"))
+    fee: Decimal = Decimal("0")
+    notes: str | None = None
+
+
+class PlanAuditLogEntry(BaseModel):
+    """计划状态迁移审计日志。"""
+
+    timestamp: datetime = Field(default_factory=datetime.now)
+    from_status: TradePlanStatus | None = None
+    to_status: TradePlanStatus
+    action: str
+    user_confirmed: bool
+    reason: str | None = None
+    previous_version: str | None = None
+    new_version: str | None = None
+
+
 class TradePlan(BaseModel):
     """交易计划对象。"""
 
     plan_id: str
     name: str
     ticker: str
-    direction: str  # long / short
+    direction: Literal["long", "short"] = "long"
     time_window: str
     research_version: str
     entry_logic: str
+    exit_logic: str | None = None
     target_price_low: Decimal | None = None
     target_price_high: Decimal | None = None
+    stop_loss: Decimal | None = None
+    take_profit: Decimal | None = None
     position_limit: Decimal = Decimal("10")  # 仓位上限 %
+    initial_position_pct: Decimal | None = None  # 首次建仓仓位 %
+    max_position_pct: Decimal | None = None  # 最大仓位 %（冗余显式字段）
     risk_budget: Decimal = Decimal("2")  # 风险预算 %
+    expected_return: Decimal | None = None  # 预期收益率 %
     invalidation_conditions: list[str] = Field(default_factory=list)
     alternative_scenarios: list[str] = Field(default_factory=list)
     triggers: list[str] = Field(default_factory=list)
+    batch_strategy: list[TradeBatch] = Field(default_factory=list)
     review_frequency: str = "weekly"
     status: TradePlanStatus = TradePlanStatus.DRAFT
     plan_version: str = "1"
     source_snapshots: dict[str, str] = Field(default_factory=dict)
+    linked_transaction_ids: list[str] = Field(default_factory=list)
+    execution_records: list[PlanExecutionRecord] = Field(default_factory=list)
+    audit_log: list[PlanAuditLogEntry] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
     notes: str | None = None
@@ -531,4 +588,7 @@ class PlanReviewSnapshot(Snapshot):
     triggered_conditions: list[str] = Field(default_factory=list)
     deviations: list[str] = Field(default_factory=list)
     recommendation: str = ""
+    suggested_action: str | None = None
+    requires_user_confirmation: bool = False
+    latest_price: Decimal | None = None
     user_decision: str | None = None

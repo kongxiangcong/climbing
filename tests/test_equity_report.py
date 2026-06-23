@@ -1,6 +1,7 @@
 """Equity report 生成与目录结构测试。"""
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from src.common.equity_report_io import (
     get_equity_report_dir,
     write_equity_report_files,
 )
+from src.common.models import ResearchSnapshot, SourceMetadata
 from src.report_generation.equity_report import EquityReportGenerator
 
 
@@ -121,7 +123,7 @@ def test_equity_report_files_include_validator_qa_check(tmp_project_root: Path) 
         version="v1",
         ticker="000725.SZ",
         summary="占位",
-        metadata=SourceMetadata(source="test", retrieved_at="2026-06-23T12:00:00", version="1.0.0"),
+        metadata=SourceMetadata(source="test", retrieved_at=datetime.fromisoformat("2026-06-23T12:00:00"), version="1.0.0"),
     )
     validator = SnapshotValidator(snapshot)
     validator.run_all()

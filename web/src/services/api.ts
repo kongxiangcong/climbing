@@ -253,10 +253,44 @@ export async function fetchPortfolioSummary(): Promise<PortfolioSummary | null> 
   }
 }
 
-export async function fetchPlans() {
-  const res = await fetch(`${API_BASE}/plans`)
-  if (!res.ok) throw new Error('Failed to fetch plans')
-  return res.json()
+export interface PlanSummary {
+  plan_id: string
+  name: string
+  ticker: string
+  direction: 'long' | 'short'
+  status: string
+  status_display: string
+  plan_version: string
+  target_price_low: string | null
+  target_price_high: string | null
+  position_limit: string
+  risk_budget: string
+  review_frequency: string
+  research_version: string
+  updated_at: string
+}
+
+export interface PlansSummary {
+  last_updated_at: string
+  count: number
+  plans: PlanSummary[]
+}
+
+export async function fetchPlans(): Promise<PlansSummary> {
+  // 开发环境若无后端，回退读取 CLI 写入的静态 plans.json
+  try {
+    const res = await fetch(`${API_BASE}/plans`)
+    if (res.ok) return res.json()
+  } catch {
+    // fallthrough to static JSON
+  }
+  try {
+    const res = await fetch('/plans.json')
+    if (!res.ok) throw new Error('Failed to fetch plans')
+    return res.json()
+  } catch {
+    throw new Error('Failed to fetch plans')
+  }
 }
 
 export async function fetchMacroReport() {
