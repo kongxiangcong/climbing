@@ -1,6 +1,7 @@
 """CLI 输出格式化 helpers。"""
 
 import json
+import sys
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -43,7 +44,9 @@ def format_result(
         result.update(extra)
 
     if fmt == OutputFormat.JSON:
-        typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
+        payload = json.dumps(result, ensure_ascii=False, indent=2)
+        encoding = sys.stdout.encoding or "utf-8"
+        typer.echo(payload.encode(encoding, errors="replace").decode(encoding))
     else:
         typer.echo(message)
         if snapshot_path:

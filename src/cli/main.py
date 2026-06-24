@@ -2,7 +2,7 @@
 
 import typer
 
-from src.cli import analyze, plan, portfolio, update
+from src.cli import analyze, inspection, plan, portfolio, update
 from src.cli.formatting import OutputFormat
 
 app = typer.Typer(
@@ -15,6 +15,7 @@ app.add_typer(update.app, name="update", help="数据更新任务")
 app.add_typer(analyze.app, name="analyze", help="个股与组合分析")
 app.add_typer(portfolio.app, name="portfolio", help="持仓管理")
 app.add_typer(plan.app, name="plan", help="交易计划管理")
+app.add_typer(inspection.app, name="inspect", help="一键巡检与自然语言入口")
 
 
 @app.callback()

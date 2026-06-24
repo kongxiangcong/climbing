@@ -384,6 +384,67 @@ export async function fetchDailyReviewSummary(): Promise<DailyReviewSummary | nu
   }
 }
 
+export interface RiskReminder {
+  code: string
+  title: string
+  detail: string
+  severity: 'info' | 'warning' | 'critical'
+  blocking: boolean
+  evidence: string[]
+}
+
+export interface InspectionSummaryCounts {
+  market_status: string
+  portfolio_status: string
+  plan_deviations: number
+  expired_research: number
+  stocks_needing_review: number
+}
+
+export interface InspectionSnapshot {
+  snapshot_id: string
+  report_type: 'inspection'
+  version: string
+  created_at: string
+  intent: string
+  route: string
+  trade_date: string
+  summary: InspectionSummaryCounts
+  risk_reminders: RiskReminder[]
+  plan_deviations: DeviationAlert[]
+  stale_research: ResearchAlert[]
+  watchlist: string[]
+  macro_summary: Record<string, unknown>
+  generated_snapshots: Array<{
+    report_type: string
+    snapshot_path: string
+    version: string
+  }>
+}
+
+export async function fetchInspectionSummary(): Promise<InspectionSnapshot | null> {
+  try {
+    const res = await fetch('/inspection-summary.json')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
+}
+
+export async function runInspection(intent = 'climbing'): Promise<InspectionSnapshot | null> {
+  try {
+    const res = await fetch(`${API_BASE}/inspect`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ intent }),
+    })
+    if (res.ok) return res.json()
+  } catch {
+    // fallthrough to latest static inspection summary
+  }
+  return fetchInspectionSummary()
+}
 export async function fetchMacroReport(): Promise<MacroReportData | null> {
   try {
     const res = await fetch(`${API_BASE}/reports/macro/latest`)

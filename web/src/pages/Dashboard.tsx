@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import DataCard from '../components/DataCard'
 import {
   fetchDailyReviewSummary,
@@ -90,7 +91,10 @@ function Dashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: '16px' }}>总览</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+        <h2>总览</h2>
+        <Link to="/inspection"><button type="button">今日巡检</button></Link>
+      </div>
       <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
         <DataCard
           title="关注标的"

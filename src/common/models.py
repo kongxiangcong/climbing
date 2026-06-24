@@ -583,6 +583,43 @@ class DailyReviewSnapshot(Snapshot):
     watchlist: list[str] = Field(default_factory=list)
 
 
+class RiskReminder(BaseModel):
+    """巡检中心软性风险提醒。"""
+
+    code: str
+    title: str
+    detail: str
+    severity: Literal["info", "warning", "critical"] = "warning"
+    blocking: bool = False
+    evidence: list[str] = Field(default_factory=list)
+
+
+class InspectionSummary(BaseModel):
+    """一键巡检摘要计数。"""
+
+    market_status: str
+    portfolio_status: str
+    plan_deviations: int = 0
+    expired_research: int = 0
+    stocks_needing_review: int = 0
+
+
+class InspectionSnapshot(Snapshot):
+    """一键巡检快照：聚合市场、持仓、计划偏离、研究过期和软提醒。"""
+
+    report_type: Literal["inspection"] = "inspection"
+    intent: str
+    route: str = "one_click_inspection"
+    trade_date: date
+    summary: InspectionSummary
+    risk_reminders: list[RiskReminder] = Field(default_factory=list)
+    plan_deviations: list[DeviationAlert] = Field(default_factory=list)
+    stale_research: list[ResearchAlert] = Field(default_factory=list)
+    watchlist: list[str] = Field(default_factory=list)
+    macro_summary: dict[str, Any] = Field(default_factory=dict)
+    generated_snapshots: list[dict[str, str]] = Field(default_factory=list)
+
+
 class PlanReviewSnapshot(Snapshot):
     """交易计划复核记录快照。"""
 

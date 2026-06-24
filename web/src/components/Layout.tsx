@@ -15,6 +15,7 @@ function Layout({ children }: LayoutProps) {
           <Link to="/portfolio">持仓管理</Link>
           <Link to="/plans">交易计划</Link>
           <Link to="/macro">宏观月报</Link>
+          <Link to="/inspection">巡检中心</Link>
         </nav>
       </aside>
       <main style={{ flex: 1, padding: '24px' }}>{children}</main>

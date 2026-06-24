@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,7 @@ from src.common.config import settings
 from src.common.models import (
     CapitalFlowSnapshot,
     DailyReviewSnapshot,
+    InspectionSnapshot,
     MacroReportSnapshot,
     MarketSnapshot,
     PlanReviewSnapshot,
@@ -26,7 +28,7 @@ from src.common.models import (
 from src.common.snapshot_io import read_snapshot, write_snapshot
 
 PROJECT_ROOT = settings.project_root
-PYTHON = shutil.which("python") or "python"
+PYTHON = sys.executable
 
 
 def _run(*args: str) -> dict[str, Any]:
@@ -156,6 +158,64 @@ def test_update_daily_generates_market_portfolio_and_review_snapshots() -> None:
     assert plan.status.value == "active"
     assert plan.plan_version == "2"
     assert len(portfolio.positions) > 0
+
+
+def test_inspect_intent_generates_one_click_summary_without_mutating_plans() -> None:
+    fixture_tx = PROJECT_ROOT / "tests" / "fixtures" / "transactions.csv"
+    _run("portfolio", "transactions", str(fixture_tx))
+
+    create_data = _run(
+        "plan",
+        "create",
+        "000725.SZ",
+        "--name",
+        "inspection-test-plan",
+        "--mock",
+        "--confirm",
+    )
+    plan_path = Path(create_data["snapshot_path"])
+    before_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+
+    stale_version = "20990101000000-inspect"
+    _write_stale_research_snapshot(
+        "000725.SZ",
+        stale_version,
+        created_at=datetime.now() - timedelta(days=30),
+    )
+
+    data = _run("inspect", "--intent", "climbing", "--mock")
+
+    assert data["success"] is True
+    assert data["intent"] == "climbing"
+    assert data["route"] == "one_click_inspection"
+    assert data["summary"]["market_status"]
+    assert data["summary"]["portfolio_status"]
+    assert data["summary"]["plan_deviations"] >= 1
+    assert data["summary"]["expired_research"] >= 1
+    assert data["summary"]["stocks_needing_review"] >= 1
+    assert len(data["risk_reminders"]) >= 3
+    assert all(reminder["blocking"] is False for reminder in data["risk_reminders"])
+
+    snapshot = read_snapshot(Path(data["snapshot_path"]), InspectionSnapshot)
+    assert snapshot.report_type == "inspection"
+    assert snapshot.intent == "climbing"
+    assert snapshot.summary.plan_deviations >= 1
+    assert snapshot.summary.expired_research >= 1
+    assert {s["report_type"] for s in snapshot.generated_snapshots} == {
+        "market",
+        "portfolio",
+        "daily_review",
+    }
+
+    web_json = PROJECT_ROOT / "web" / "public" / "inspection-summary.json"
+    assert web_json.exists()
+    loaded = json.loads(web_json.read_text(encoding="utf-8"))
+    assert loaded["summary"]["stocks_needing_review"] >= 1
+
+    after_plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    assert after_plan["status"] == before_plan["status"] == "active"
+    assert after_plan["plan_version"] == before_plan["plan_version"] == "2"
+    assert len(after_plan["audit_log"]) == len(before_plan["audit_log"])
 
 
 def test_update_daily_fails_gracefully_when_market_fixture_missing(
