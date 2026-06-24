@@ -8,8 +8,9 @@ from typing import Any
 
 from src.common.config import settings
 from src.common.logger import get_logger
-from src.common.models import PlanExecutionRecord, TradePlan
+from src.common.models import PlanExecutionRecord, PlanReviewSnapshot, TradePlan
 from src.common.paths import get_data_dir
+from src.common.snapshot_io import latest_snapshot_path, read_snapshot
 from src.data_standardization.versioner import generate_version
 
 logger = get_logger(__name__)
@@ -68,6 +69,41 @@ def write_plans_web_summary() -> Path:
     for plan_id in list_plan_ids():
         try:
             plan = load_plan(plan_id)
+            review_data: dict[str, Any] = {}
+            try:
+                review_path = latest_snapshot_path("plan_review", plan_id)
+                if review_path is not None:
+                    review = read_snapshot(review_path, PlanReviewSnapshot)
+                    review_data = {
+                        "deviation_score": None,
+                        "deviation_level": None,
+                        "deviation_reasons": review.triggered_conditions,
+                        "requires_review": review.requires_user_confirmation,
+                        "latest_price": str(review.latest_price)
+                        if review.latest_price is not None
+                        else None,
+                        "recommendation": review.recommendation,
+                        "suggested_action": review.suggested_action,
+                        "latest_review_version": review.version,
+                    }
+                    # 尝试从 deviations 文本中解析出分数与等级，保持向后兼容
+                    if review.deviations:
+                        first = review.deviations[0]
+                        if "偏离分数" in first and "等级" in first:
+                            parts = first.split("，")
+                            for part in parts:
+                                if "分数" in part:
+                                    try:
+                                        review_data["deviation_score"] = float(
+                                            part.split("：")[-1]
+                                        )
+                                    except ValueError:
+                                        pass
+                                if "等级" in part:
+                                    review_data["deviation_level"] = part.split("：")[-1]
+            except Exception as exc:  # pragma: no cover
+                logger.debug("Failed to load plan review for %s: %s", plan_id, exc)
+
             summaries.append(
                 {
                     "plan_id": plan.plan_id,
@@ -88,6 +124,8 @@ def write_plans_web_summary() -> Path:
                     "review_frequency": plan.review_frequency,
                     "research_version": plan.research_version,
                     "updated_at": plan.updated_at.isoformat(),
+                    "execution_records_count": len(plan.execution_records),
+                    **review_data,
                 }
             )
         except Exception as exc:  # pragma: no cover
@@ -128,6 +166,40 @@ def link_transaction_to_plan(
     notes: str | None = None,
 ) -> TradePlan:
     """将一条真实交易流水关联到计划，并追加执行记录（不修改状态）。"""
+    side = side.lower()
+    price_dec = Decimal(str(price))
+
+    # 参考价：买入对应目标区间下限，卖出对应止盈价或目标区间上限
+    reference_price: Decimal | None = None
+    if side == "buy":
+        reference_price = plan.target_price_low if plan.target_price_low is not None else plan.stop_loss
+    elif side == "sell":
+        reference_price = plan.take_profit if plan.take_profit is not None else plan.target_price_high
+
+    execution_deviation_pct: Decimal | None = None
+    if reference_price is not None and reference_price != Decimal("0"):
+        execution_deviation_pct = (
+            (price_dec - reference_price) / reference_price * Decimal("100")
+        ).quantize(Decimal("0.01"))
+
+    plan_return: Decimal | None = None
+    if side == "buy":
+        target = plan.take_profit or plan.target_price_high
+        if target is not None and target != Decimal("0"):
+            plan_return = ((target - price_dec) / price_dec * Decimal("100")).quantize(
+                Decimal("0.01")
+            )
+    elif side == "sell":
+        target = plan.target_price_low
+        if target is not None and target != Decimal("0"):
+            plan_return = ((price_dec - target) / target * Decimal("100")).quantize(
+                Decimal("0.01")
+            )
+
+    discipline_score: Decimal | None = None
+    if execution_deviation_pct is not None:
+        discipline_score = max(Decimal("0"), Decimal("100") - abs(execution_deviation_pct))
+
     if transaction_id not in plan.linked_transaction_ids:
         plan.linked_transaction_ids.append(transaction_id)
 
@@ -137,8 +209,12 @@ def link_transaction_to_plan(
             ticker=ticker,
             side=side,
             quantity=quantity,
-            price=Decimal(str(price)),
+            price=price_dec,
             fee=Decimal(str(fee)),
+            plan_version_at_execution=plan.plan_version,
+            execution_deviation_pct=execution_deviation_pct,
+            plan_return=plan_return,
+            discipline_score=discipline_score,
             notes=notes,
         )
     )

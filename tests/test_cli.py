@@ -287,9 +287,72 @@ def test_plan_show_and_list() -> None:
     assert any(p["plan_id"] == plan_id for p in list_data["plans"])
 
 
-def test_version_returns_json() -> None:
-    data = _run("version")
-    assert "version" in data
+def test_plan_check_outputs_price_trigger() -> None:
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "price-trigger-test", "--mock"
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    check_data = _run("plan", "check", plan_id, "--latest-price", "5.2", "--mock")
+    assert check_data["success"] is True
+    assert check_data["level"] in ("slight", "moderate", "severe")
+    assert any("价格触发" in t for t in check_data["triggered"])
+
+    review_path = Path(check_data["snapshot_path"])
+    review = read_snapshot(review_path, PlanReviewSnapshot)
+    assert review.report_type == "plan_review"
+    assert review.plan_id == plan_id
+    assert review.fundamental_review is not None
+
+
+def test_plan_check_announcement_keyword_triggers_deviation() -> None:
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "announcement-trigger-test", "--mock"
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    announcement_file = str(PROJECT_ROOT / "tests" / "fixtures" / "announcements.json")
+    check_data = _run(
+        "plan",
+        "check",
+        plan_id,
+        "--latest-price",
+        "4.5",
+        "--announcement-file",
+        announcement_file,
+        "--mock",
+    )
+    assert check_data["success"] is True
+    assert any("事件触发" in t or "立案调查" in t for t in check_data["triggered"])
+    assert check_data["score"] is not None and check_data["score"] > 0
+    assert check_data["level"] in ("slight", "moderate", "severe")
+
+
+def test_plan_link_transaction_records_execution_deviation() -> None:
+    create_data = _run(
+        "plan", "create", "000725.SZ", "--name", "link-transaction-test", "--mock", "--confirm"
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    link_data = _run(
+        "plan",
+        "link-transaction",
+        plan_id,
+        "tx-100",
+        "000725.SZ",
+        "buy",
+        "100",
+        "4.85",
+        "--fee",
+        "5",
+    )
+    assert link_data["success"] is True
+    assert link_data["plan_version_at_execution"] == "2"
+    assert link_data["execution_deviation_pct"] is not None
+    assert link_data["discipline_score"] is not None
 
 
 def test_update_securities_generates_security_master() -> None:

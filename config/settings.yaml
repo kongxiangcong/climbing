@@ -58,3 +58,22 @@ reports:
 analysis:
   default_lookback_days: 252
   risk_free_rate: 0.025
+
+scoring_rules:
+  plan_deviation:
+    triggers:
+      price_trigger_met: 25
+      stop_loss_triggered: 30
+      take_profit_triggered: 25
+      earnings_miss: 20
+      announcement_changes_logic: 20
+    levels:
+      slight:
+        score_range: [0, 30]
+        action: "更新说明"
+      moderate:
+        score_range: [30, 60]
+        action: "要求审核"
+      severe:
+        score_range: [60, 100]
+        action: "标记为假设被破坏"

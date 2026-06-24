@@ -35,7 +35,7 @@ from src.common.plan_io import (
     write_plans_web_summary,
 )
 from src.common.skill_runner import run_skill
-from src.common.snapshot_io import latest_snapshot_path, read_snapshot
+from src.common.snapshot_io import latest_snapshot_path, read_snapshot, write_snapshot
 from src.data_standardization.versioner import generate_version
 
 app = typer.Typer()
@@ -49,6 +49,17 @@ def _load_fixture(name: str) -> dict[str, Any]:
         data: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
         return data
     return {}
+
+
+def _load_json_file(path: Path | None) -> Any:
+    """加载外部 JSON 文件；缺失或解析失败时返回 None。"""
+    if path is None or not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        logger.warning("Failed to parse %s: %s", path, exc)
+        return None
 
 
 def _to_decimal(value: Any) -> Decimal | None:
@@ -131,6 +142,56 @@ def _run_trade_plan_skill(
     )
     if not result.get("success"):
         logger.error("Trade-plan skill failed: %s", result.get("stderr", ""))
+        return None
+
+    parsed = result.get("parsed_output")
+    if isinstance(parsed, list) and parsed:
+        return cast(dict[str, Any], parsed[-1])
+    if isinstance(parsed, dict):
+        return cast(dict[str, Any], parsed)
+
+    stdout = result.get("stdout", "") or ""
+    if stdout.strip():
+        try:
+            return cast(dict[str, Any], json.loads(stdout.strip().splitlines()[-1]))
+        except json.JSONDecodeError:
+            logger.warning("Failed to parse skill stdout as JSON")
+    return None
+
+
+def _run_mock_plan_review_skill(context: dict[str, Any]) -> dict[str, Any]:
+    """离线 mock：从 fixture 读取并根据 context 做最小适配。"""
+    draft = _load_fixture("plan_review_draft.json")
+    deviation = context.get("deviation_result", {})
+    triggered = deviation.get("triggered", [])
+    if triggered:
+        draft["triggered_conditions"] = triggered
+        draft["deviations"] = [
+            f"偏离分数：{deviation.get('score')}，等级：{deviation.get('level')}，建议：{deviation.get('action')}"
+        ]
+    return draft
+
+
+def _run_plan_review_skill(
+    context: dict[str, Any],
+    mock: bool,
+) -> dict[str, Any] | None:
+    """调用 plan-review skill 或 mock 生成复核草案。"""
+    if mock:
+        return _run_mock_plan_review_skill(context)
+
+    if shutil.which("kimi") is None:
+        logger.warning("Kimi CLI not found, falling back to mock mode")
+        return _run_mock_plan_review_skill(context)
+
+    result = run_skill(
+        prompt="请复核以下交易计划偏离情况",
+        skill_name="plan-review",
+        context=context,
+        timeout=120,
+    )
+    if not result.get("success"):
+        logger.error("Plan-review skill failed: %s", result.get("stderr", ""))
         return None
 
     parsed = result.get("parsed_output")
@@ -440,6 +501,22 @@ def check_plan(
     ctx: typer.Context,
     plan_id: str = typer.Argument(..., help="计划ID"),
     latest_price: str = typer.Option("0", help="最新价格"),
+    announcement_file: Path | None = typer.Option(
+        None,
+        "--announcement-file",
+        help="公告 JSON 文件路径（列表格式）",
+    ),
+    financials_file: Path | None = typer.Option(
+        None,
+        "--financials-file",
+        help="财务 JSON 文件路径（字典格式，含 np_yoy 等）",
+    ),
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="使用 mock skill 输出复核草案（测试用）",
+        envvar="CLIMBING_MOCK_SKILL",
+    ),
 ) -> None:
     """检查计划偏离并生成 PlanReviewSnapshot。"""
     logger.info("Checking plan: %s", plan_id)
@@ -450,13 +527,38 @@ def check_plan(
         raise typer.Exit(code=1) from None
 
     price = Decimal(latest_price)
+
+    latest_financials: dict[str, Any] = {}
+    financials_raw = _load_json_file(financials_file)
+    if isinstance(financials_raw, dict):
+        latest_financials = financials_raw
+
+    latest_announcements: list[dict[str, Any]] = []
+    announcements_raw = _load_json_file(announcement_file)
+    if isinstance(announcements_raw, list):
+        latest_announcements = announcements_raw
+
     scorer = PlanDeviationScorer()
     deviation = scorer.evaluate(
         plan=plan,
         latest_price=price,
-        latest_financials={},
-        latest_announcements=[],
+        latest_financials=latest_financials,
+        latest_announcements=latest_announcements,
     )
+
+    review_context: dict[str, Any] = {
+        "plan": plan.model_dump(mode="json"),
+        "latest_price": str(price),
+        "deviation_result": deviation,
+    }
+    market = _load_latest_market()
+    if market is not None:
+        review_context["market_snapshot"] = market.model_dump(mode="json")
+    research = _load_latest_research(plan.ticker)
+    if research is not None:
+        review_context["research_snapshot"] = research.model_dump(mode="json")
+
+    draft = _run_plan_review_skill(review_context, mock=mock)
 
     version = generate_version(f"{plan_id}-{datetime.now().isoformat()}")
     review = PlanReviewSnapshot(
@@ -472,13 +574,18 @@ def check_plan(
         suggested_action=deviation.get("action"),
         requires_user_confirmation=deviation.get("level") in ("moderate", "severe"),
         latest_price=price,
+        fundamental_review=draft.get("fundamental_review") if draft else None,
+        valuation_review=draft.get("valuation_review") if draft else None,
+        market_review=draft.get("market_review") if draft else None,
+        bull_arguments=draft.get("bull_arguments", []) if draft else [],
+        bear_arguments=draft.get("bear_arguments", []) if draft else [],
+        plan_change_suggestions=draft.get("plan_change_suggestions", []) if draft else [],
         metadata=SourceMetadata(
             source="climbing.plan.check",
             retrieved_at=datetime.now(),
             version="1.0.0",
         ),
     )
-    from src.common.snapshot_io import write_snapshot
 
     path = write_snapshot(review, "plan_review", plan_id)
     format_result(
@@ -526,6 +633,8 @@ def link_transaction(
     )
     save_plan(plan)
     write_plans_web_summary()
+
+    latest_record = plan.execution_records[-1]
     format_result(
         ctx,
         success=True,
@@ -534,5 +643,12 @@ def link_transaction(
         version=plan.plan_version,
         extra={
             "execution_records_count": len(plan.execution_records),
+            "plan_version_at_execution": latest_record.plan_version_at_execution,
+            "execution_deviation_pct": str(latest_record.execution_deviation_pct)
+            if latest_record.execution_deviation_pct is not None
+            else None,
+            "discipline_score": str(latest_record.discipline_score)
+            if latest_record.discipline_score is not None
+            else None,
         },
     )

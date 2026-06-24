@@ -125,6 +125,10 @@ class PlanExecutionRecord(BaseModel):
     quantity: int = Field(ge=1)
     price: Decimal = Field(ge=Decimal("0"))
     fee: Decimal = Decimal("0")
+    plan_version_at_execution: str = "1"
+    execution_deviation_pct: Decimal | None = None
+    plan_return: Decimal | None = None
+    discipline_score: Decimal | None = None
     notes: str | None = None
 
 
@@ -592,3 +596,11 @@ class PlanReviewSnapshot(Snapshot):
     requires_user_confirmation: bool = False
     latest_price: Decimal | None = None
     user_decision: str | None = None
+
+    # plan-review skill / agent 生成的复核草案字段
+    fundamental_review: str | None = None
+    valuation_review: str | None = None
+    market_review: str | None = None
+    bull_arguments: list[str] = Field(default_factory=list)
+    bear_arguments: list[str] = Field(default_factory=list)
+    plan_change_suggestions: list[str] = Field(default_factory=list)

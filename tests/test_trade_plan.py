@@ -191,7 +191,7 @@ def test_plan_io_build_id() -> None:
 
 
 def test_link_transaction_to_plan() -> None:
-    plan = _sample_plan()
+    plan = _sample_plan(plan_version="3")
     link_transaction_to_plan(
         plan=plan,
         transaction_id="tx-1",
@@ -203,7 +203,52 @@ def test_link_transaction_to_plan() -> None:
     )
     assert "tx-1" in plan.linked_transaction_ids
     assert len(plan.execution_records) == 1
-    assert plan.execution_records[0].price == Decimal("4.85")
+    record = plan.execution_records[0]
+    assert record.price == Decimal("4.85")
+    assert record.plan_version_at_execution == "3"
+    assert record.execution_deviation_pct is not None
+    # 买入价高于 target_price_low(4.8)，偏离为正
+    assert record.execution_deviation_pct > Decimal("0")
+    assert record.discipline_score is not None
+    assert record.discipline_score <= Decimal("100")
+
+
+def test_link_sell_transaction_plan_return() -> None:
+    plan = _sample_plan()
+    link_transaction_to_plan(
+        plan=plan,
+        transaction_id="tx-sell",
+        ticker="000725.SZ",
+        side="sell",
+        quantity=100,
+        price="6.5",
+        fee="5",
+    )
+    record = plan.execution_records[0]
+    assert record.plan_version_at_execution == plan.plan_version
+    assert record.plan_return is not None
+    # 卖出价高于 target_price_low(4.8)，plan_return 为正
+    assert record.plan_return > Decimal("0")
+
+
+def test_link_transaction_without_reference_prices() -> None:
+    plan = _sample_plan(
+        target_price_low=Decimal("0"),
+        target_price_high=Decimal("0"),
+        stop_loss=None,
+        take_profit=None,
+    )
+    link_transaction_to_plan(
+        plan=plan,
+        transaction_id="tx-2",
+        ticker="000725.SZ",
+        side="buy",
+        quantity=100,
+        price="5.0",
+    )
+    record = plan.execution_records[0]
+    assert record.execution_deviation_pct is None
+    assert record.discipline_score is None
 
 
 def test_write_plans_web_summary(tmp_path: Path) -> None:

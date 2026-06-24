@@ -268,6 +268,15 @@ export interface PlanSummary {
   review_frequency: string
   research_version: string
   updated_at: string
+  execution_records_count?: number
+  deviation_score?: number | null
+  deviation_level?: 'slight' | 'moderate' | 'severe' | null
+  deviation_reasons?: string[]
+  requires_review?: boolean
+  latest_price?: string | null
+  recommendation?: string | null
+  suggested_action?: string | null
+  latest_review_version?: string | null
 }
 
 export interface PlansSummary {

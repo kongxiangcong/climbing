@@ -1,0 +1,20 @@
+[
+  {
+    "ticker": "000725.SZ",
+    "reportDate": "2026-06-23",
+    "seq": 1,
+    "reportTitle": "京东方A关于投资建设新型显示产线的公告",
+    "source": "test-fixture",
+    "retrieved_at": "2026-06-24T09:00:00",
+    "version": "1.0.0"
+  },
+  {
+    "ticker": "000725.SZ",
+    "reportDate": "2026-06-22",
+    "seq": 2,
+    "reportTitle": "关于收到中国证券监督管理委员会立案调查通知书的公告",
+    "source": "test-fixture",
+    "retrieved_at": "2026-06-24T09:00:00",
+    "version": "1.0.0"
+  }
+]
