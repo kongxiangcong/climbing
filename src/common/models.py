@@ -640,6 +640,7 @@ class CapitalFlowSnapshot(Snapshot):
     inflation_label: Literal["overheated", "neutral", "cool"] = "neutral"
     liquidity_label: Literal["overheated", "neutral", "cool"] = "neutral"
     market_structure_label: Literal["overheated", "neutral", "cool"] = "neutral"
+    indicator_history: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class MacroReportSnapshot(Snapshot):

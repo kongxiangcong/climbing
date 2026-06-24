@@ -66,6 +66,7 @@ class CapitalFlowStandardizer:
             "report_month": month,
             "indicators": [ind.model_dump(mode="json") for ind in indicators],
             "assessments": [a.model_dump(mode="json") for a in assessments],
+            "indicator_history": data.get("indicator_history", []),
             **labels,
         }
         version = generate_version(version_data)
@@ -95,6 +96,7 @@ class CapitalFlowStandardizer:
             market_structure_label=cast(
                 Literal["overheated", "neutral", "cool"], labels["market_structure_label"]
             ),
+            indicator_history=data.get("indicator_history", []),
         )
 
     def _derive_labels(

@@ -359,8 +359,8 @@ def analyze_macro(
     try:
         from src.cli.update import _macro_report_snapshot, _write_macro_report_web_summary
 
-        macro_path, macro_version = _macro_report_snapshot(cf_snapshot, mock=mock)
-        _write_macro_report_web_summary(cf_snapshot)
+        macro_path, macro_snapshot = _macro_report_snapshot(cf_snapshot, mock=mock)
+        _write_macro_report_web_summary(cf_snapshot, macro_snapshot)
     except Exception as exc:
         logger.error("Macro report generation failed: %s", exc)
         format_result(
@@ -375,7 +375,7 @@ def analyze_macro(
         success=True,
         message=f"宏观月报生成完成：{cf_snapshot.report_month}",
         snapshot_path=macro_path,
-        version=macro_version,
+        version=macro_snapshot.version,
     )
 
 

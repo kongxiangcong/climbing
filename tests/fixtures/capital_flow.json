@@ -141,7 +141,7 @@
       "question": "无风险利率趋势如何？",
       "answer": "10年期国债收益率2.35%处于历史低位，进一步下行空间有限。",
       "evidence": ["10Y国债收益率2.35%", "CPI同比0.3%"],
-      "label": "neutral"
+      "label": "cool"
     }
   ],
   "growth_label": "neutral",

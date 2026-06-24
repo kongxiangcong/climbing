@@ -275,6 +275,16 @@ function MacroReport() {
               </ul>
             </>
           )}
+          {report.recommendations && report.recommendations.length > 0 && (
+            <>
+              <h4>策略建议</h4>
+              <ul>
+                {report.recommendations.map((rec, i) => (
+                  <li key={i}>{rec}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
     </div>

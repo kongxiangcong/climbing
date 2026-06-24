@@ -248,6 +248,7 @@ export interface MacroReportData {
   summary?: string
   outlook?: string
   risks?: string[]
+  recommendations?: string[]
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'

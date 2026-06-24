@@ -552,7 +552,7 @@ def monthly_update(
         raise typer.Exit(code=1) from exc
 
     try:
-        macro_path, macro_version = _macro_report_snapshot(
+        macro_path, macro_snapshot = _macro_report_snapshot(
             capital_flow=cf_snapshot, mock=mock
         )
     except Exception as exc:
@@ -564,7 +564,7 @@ def monthly_update(
         )
         raise typer.Exit(code=1) from exc
 
-    _write_macro_report_web_summary(cf_snapshot)
+    _write_macro_report_web_summary(cf_snapshot, macro_snapshot)
 
     snapshots: list[dict[str, Any]] = [
         {
@@ -575,7 +575,7 @@ def monthly_update(
         {
             "report_type": "macro_report",
             "snapshot_path": str(macro_path),
-            "version": macro_version,
+            "version": macro_snapshot.version,
         },
     ]
     _write_system_status(snapshots)
@@ -606,11 +606,14 @@ def _run_mock_capital_flow(context: dict[str, Any]) -> dict[str, Any]:
         logger.warning("capital-flow mock script not found, using fixture fallback")
         return _load_fixture("capital_flow.json")
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp:
-        tmp.write(json.dumps(context, ensure_ascii=False, indent=2))
-        tmp_path = Path(tmp.name)
-
+    tmp_path: Path | None = None
     try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as tmp:
+            tmp_path = Path(tmp.name)
+            tmp.write(json.dumps(context, ensure_ascii=False, indent=2))
+
         proc = subprocess.run(
             [sys.executable, str(script), str(tmp_path)],
             capture_output=True,
@@ -627,7 +630,8 @@ def _run_mock_capital_flow(context: dict[str, Any]) -> dict[str, Any]:
         logger.warning("Failed to run capital-flow mock script: %s", exc)
         return _load_fixture("capital_flow.json")
     finally:
-        tmp_path.unlink(missing_ok=True)
+        if tmp_path is not None:
+            tmp_path.unlink(missing_ok=True)
 
 
 def _run_capital_flow_skill(
@@ -670,7 +674,7 @@ def _run_capital_flow_skill(
 def _macro_report_snapshot(
     capital_flow: CapitalFlowSnapshot,
     mock: bool,
-) -> tuple[Path, str]:
+) -> tuple[Path, MacroReportSnapshot]:
     """生成宏观月报叙事快照。"""
     from src.report_generation.capital_flow_report import CapitalFlowReportGenerator
 
@@ -731,40 +735,55 @@ def _macro_report_snapshot(
     md_path.write_text(report_md, encoding="utf-8")
     logger.info("Wrote macro report markdown -> %s", md_path)
 
-    return path, version
+    return path, snapshot
 
 
-def _write_macro_report_web_summary(snapshot: CapitalFlowSnapshot) -> Path:
+def _write_macro_report_web_summary(
+    capital_flow: CapitalFlowSnapshot,
+    macro_report: MacroReportSnapshot | None = None,
+) -> Path:
     """将最新宏观月报摘要写入 web/public，供前端静态读取。"""
     web_public = settings.project_root / "web" / "public"
     web_public.mkdir(parents=True, exist_ok=True)
     web_path = web_public / "macro-report.json"
 
-    raw = snapshot.model_dump(mode="json")
+    raw = capital_flow.model_dump(mode="json")
     # 把 tier 同时暴露为 authority_tier，便于前端展示
     for ind in raw.get("indicators", []):
         meta = ind.get("metadata", {})
         meta["authority_tier"] = meta.get("tier")
 
-    # 提供图表可用的时间序列（ fixture 中可能包含）
-    fixture = _load_fixture("capital_flow.json")
-    indicator_history = fixture.get("indicator_history", [])
+    # 时间序列直接来自 snapshot 的 extra 字段（fixture 提供）
+    indicator_history = raw.get("indicator_history", [])
 
-    summary = {
-        "report_month": snapshot.report_month,
-        "last_snapshot_at": snapshot.created_at.isoformat(),
-        "version": snapshot.version,
-        "source": snapshot.metadata.source,
-        "retrieved_at": snapshot.metadata.retrieved_at.isoformat(),
-        "authority_tier": snapshot.metadata.tier,
+    summary: dict[str, Any] = {
+        "report_month": capital_flow.report_month,
+        "last_snapshot_at": capital_flow.created_at.isoformat(),
+        "version": capital_flow.version,
+        "source": capital_flow.metadata.source,
+        "retrieved_at": capital_flow.metadata.retrieved_at.isoformat(),
+        "authority_tier": capital_flow.metadata.tier,
         "indicators": raw.get("indicators", []),
         "indicator_history": indicator_history,
-        "four_questions": [a.model_dump(mode="json") for a in snapshot.assessments],
-        "growth_label": snapshot.growth_label,
-        "inflation_label": snapshot.inflation_label,
-        "liquidity_label": snapshot.liquidity_label,
-        "market_structure_label": snapshot.market_structure_label,
+        "four_questions": [a.model_dump(mode="json") for a in capital_flow.assessments],
+        "growth_label": capital_flow.growth_label,
+        "inflation_label": capital_flow.inflation_label,
+        "liquidity_label": capital_flow.liquidity_label,
+        "market_structure_label": capital_flow.market_structure_label,
     }
+
+    if macro_report is not None:
+        summary.update(
+            {
+                "summary": macro_report.summary,
+                "outlook": macro_report.outlook,
+                "risks": macro_report.risks,
+                "recommendations": macro_report.recommendations,
+                "macro_report_version": macro_report.version,
+                "macro_report_snapshot_id": macro_report.snapshot_id,
+            }
+        )
+
     web_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
     logger.info("Wrote macro report summary for web -> %s", web_path)
     return web_path
