@@ -604,3 +604,52 @@ class PlanReviewSnapshot(Snapshot):
     bull_arguments: list[str] = Field(default_factory=list)
     bear_arguments: list[str] = Field(default_factory=list)
     plan_change_suggestions: list[str] = Field(default_factory=list)
+
+
+class MacroIndicator(BaseModel):
+    """单个宏观指标数据点，带完整溯源。"""
+
+    name: str
+    value: float
+    unit: str
+    period: str
+    yoy_change: float | None = None
+    mom_change: float | None = None
+    category: Literal["growth", "inflation", "liquidity", "market_structure"]
+    metadata: SourceMetadata
+
+
+class CapitalFlowAssessment(BaseModel):
+    """四资本问题评估结论。"""
+
+    question_id: Literal["Q1", "Q2", "Q3", "Q4"]
+    question: str
+    answer: str
+    evidence: list[str] = Field(default_factory=list)
+    label: Literal["overheated", "neutral", "cool"] = "neutral"
+
+
+class CapitalFlowSnapshot(Snapshot):
+    """宏观资金流事实快照（月度）。"""
+
+    report_type: Literal["capital_flow"] = "capital_flow"
+    report_month: str
+    indicators: list[MacroIndicator] = Field(default_factory=list)
+    assessments: list[CapitalFlowAssessment] = Field(default_factory=list)
+    growth_label: Literal["overheated", "neutral", "cool"] = "neutral"
+    inflation_label: Literal["overheated", "neutral", "cool"] = "neutral"
+    liquidity_label: Literal["overheated", "neutral", "cool"] = "neutral"
+    market_structure_label: Literal["overheated", "neutral", "cool"] = "neutral"
+
+
+class MacroReportSnapshot(Snapshot):
+    """宏观月报叙事快照（agent 生成）。"""
+
+    report_type: Literal["macro_report"] = "macro_report"
+    report_month: str
+    capital_flow_snapshot_id: str
+    summary: str = ""
+    four_questions: list[CapitalFlowAssessment] = Field(default_factory=list)
+    outlook: str = ""
+    risks: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)

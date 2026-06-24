@@ -16,7 +16,15 @@ from src.common.equity_report_io import (
 )
 from src.common.equity_researcher_adapter import build_research_snapshot_from_skill_output
 from src.common.logger import get_logger
-from src.common.models import ResearchSnapshot, SourceMetadata, Valuation
+from src.common.models import (
+    CapitalFlowAssessment,
+    CapitalFlowSnapshot,
+    MacroReportSnapshot,
+    ResearchSnapshot,
+    SourceMetadata,
+    Valuation,
+)
+from src.common.snapshot_io import latest_snapshot_path, read_snapshot, write_snapshot
 from src.common.research_cache import CacheTier, ResearchCache
 from src.common.skill_runner import run_skill
 from src.common.snapshot_validator import SnapshotValidator
@@ -298,6 +306,79 @@ def analyze_stock(
     _write_report(ctx, ticker, snapshot, report_dir)
 
 
+def _load_or_build_capital_flow_snapshot(
+    report_month: str | None,
+) -> tuple[Path, CapitalFlowSnapshot]:
+    """优先复用已存在的 CapitalFlowSnapshot，否则重新生成。"""
+    from src.cli.update import _capital_flow_snapshot
+
+    if report_month:
+        return _capital_flow_snapshot(report_month)
+
+    latest = latest_snapshot_path("capital_flow")
+    if latest is not None:
+        snapshot = read_snapshot(latest, CapitalFlowSnapshot)
+        return latest, snapshot
+
+    return _capital_flow_snapshot()
+
+
+@app.command("macro")
+def analyze_macro(
+    ctx: typer.Context,
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="使用 mock skill 输出（测试用，不调用真实 Kimi CLI）",
+        envvar="CLIMBING_MOCK_SKILL",
+    ),
+    report_month: str | None = typer.Option(
+        None,
+        "--month",
+        help="报告月份，格式 YYYY-MM；默认复用最新事实快照",
+    ),
+) -> None:
+    """生成宏观月报叙事快照。"""
+    logger.info("Analyzing macro (mock=%s, month=%s)", mock, report_month)
+
+    if not mock and shutil.which("kimi") is None:
+        logger.warning("Kimi CLI not found, falling back to mock mode")
+        mock = True
+
+    try:
+        cf_path, cf_snapshot = _load_or_build_capital_flow_snapshot(report_month)
+    except Exception as exc:
+        logger.error("Capital flow snapshot load/build failed: %s", exc)
+        format_result(
+            ctx,
+            success=False,
+            message=f"宏观事实表准备失败：{exc}",
+        )
+        raise typer.Exit(code=1) from exc
+
+    try:
+        from src.cli.update import _macro_report_snapshot, _write_macro_report_web_summary
+
+        macro_path, macro_version = _macro_report_snapshot(cf_snapshot, mock=mock)
+        _write_macro_report_web_summary(cf_snapshot)
+    except Exception as exc:
+        logger.error("Macro report generation failed: %s", exc)
+        format_result(
+            ctx,
+            success=False,
+            message=f"宏观月报生成失败：{exc}",
+        )
+        raise typer.Exit(code=1) from exc
+
+    format_result(
+        ctx,
+        success=True,
+        message=f"宏观月报生成完成：{cf_snapshot.report_month}",
+        snapshot_path=macro_path,
+        version=macro_version,
+    )
+
+
 @app.command("portfolio")
 def analyze_portfolio(ctx: typer.Context) -> None:
     """生成持仓组合分析报告。"""
@@ -306,15 +387,4 @@ def analyze_portfolio(ctx: typer.Context) -> None:
         ctx,
         success=True,
         message="组合分析报告生成完成（占位）。",
-    )
-
-
-@app.command("macro")
-def analyze_macro(ctx: typer.Context) -> None:
-    """生成市场与宏观月报。"""
-    logger.info("Analyzing macro")
-    format_result(
-        ctx,
-        success=True,
-        message="宏观月报生成完成（占位）。",
     )

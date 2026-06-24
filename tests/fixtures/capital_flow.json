@@ -1,0 +1,159 @@
+{
+  "report_month": "2026-05",
+  "indicators": [
+    {
+      "name": "制造业PMI",
+      "value": 49.8,
+      "unit": "%",
+      "period": "2026-05",
+      "yoy_change": -0.3,
+      "mom_change": 0.2,
+      "category": "growth",
+      "metadata": {
+        "source": "国家统计局",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.95,
+        "notes": "官方月度PMI"
+      }
+    },
+    {
+      "name": "CPI同比",
+      "value": 0.3,
+      "unit": "%",
+      "period": "2026-05",
+      "yoy_change": 0.1,
+      "mom_change": -0.1,
+      "category": "inflation",
+      "metadata": {
+        "source": "国家统计局",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.95,
+        "notes": "居民消费价格指数"
+      }
+    },
+    {
+      "name": "PPI同比",
+      "value": -1.2,
+      "unit": "%",
+      "period": "2026-05",
+      "yoy_change": 0.5,
+      "mom_change": 0.1,
+      "category": "inflation",
+      "metadata": {
+        "source": "国家统计局",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.95,
+        "notes": "工业生产者出厂价格"
+      }
+    },
+    {
+      "name": "M2同比",
+      "value": 7.0,
+      "unit": "%",
+      "period": "2026-05",
+      "yoy_change": -0.5,
+      "mom_change": -0.1,
+      "category": "liquidity",
+      "metadata": {
+        "source": "中国人民银行",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.95,
+        "notes": "广义货币供应量"
+      }
+    },
+    {
+      "name": "10年期国债收益率",
+      "value": 2.35,
+      "unit": "%",
+      "period": "2026-05-31",
+      "yoy_change": -0.15,
+      "mom_change": -0.05,
+      "category": "liquidity",
+      "metadata": {
+        "source": "中债估值",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.9,
+        "notes": "无风险利率代理指标"
+      }
+    },
+    {
+      "name": "沪深300",
+      "value": 3600.0,
+      "unit": "点",
+      "period": "2026-05-31",
+      "yoy_change": -5.0,
+      "mom_change": -2.0,
+      "category": "market_structure",
+      "metadata": {
+        "source": "上海证券交易所",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 1,
+        "confidence": 0.95,
+        "notes": "A股核心指数"
+      }
+    },
+    {
+      "name": "融资融券余额",
+      "value": 15000.0,
+      "unit": "亿元",
+      "period": "2026-05-31",
+      "yoy_change": -2.0,
+      "mom_change": -1.0,
+      "category": "market_structure",
+      "metadata": {
+        "source": "同花顺",
+        "retrieved_at": "2026-06-01T00:00:00",
+        "tier": 2,
+        "confidence": 0.85,
+        "notes": "市场杠杆资金"
+      }
+    }
+  ],
+  "assessments": [
+    {
+      "question_id": "Q1",
+      "question": "M2扩张是否带来实体融资回暖？",
+      "answer": "M2同比7.0%但PMI仍处荣枯线附近，资金向实体传导效率偏低。",
+      "evidence": ["M2同比7.0%", "制造业PMI 49.8"],
+      "label": "cool"
+    },
+    {
+      "question_id": "Q2",
+      "question": "政策指引方向是否明确？",
+      "answer": "货币政策维持稳健，财政政策通过专项债和基建托底。",
+      "evidence": ["10Y国债收益率2.35%", "M2增速平稳"],
+      "label": "neutral"
+    },
+    {
+      "question_id": "Q3",
+      "question": "居民资产是否向权益迁移？",
+      "answer": "沪深300偏弱、融资余额下降，居民风险偏好尚未明显回升。",
+      "evidence": ["沪深300 3600点", "融资融券余额15000亿元"],
+      "label": "cool"
+    },
+    {
+      "question_id": "Q4",
+      "question": "无风险利率趋势如何？",
+      "answer": "10年期国债收益率2.35%处于历史低位，进一步下行空间有限。",
+      "evidence": ["10Y国债收益率2.35%", "CPI同比0.3%"],
+      "label": "neutral"
+    }
+  ],
+  "growth_label": "neutral",
+  "inflation_label": "neutral",
+  "liquidity_label": "cool",
+  "market_structure_label": "cool",
+  "indicator_history": [
+    {"period": "2025-12", "M2同比": 7.5, "CPI同比": 0.1, "10年期国债收益率": 2.55},
+    {"period": "2026-01", "M2同比": 7.4, "CPI同比": 0.2, "10年期国债收益率": 2.50},
+    {"period": "2026-02", "M2同比": 7.2, "CPI同比": 0.0, "10年期国债收益率": 2.45},
+    {"period": "2026-03", "M2同比": 7.1, "CPI同比": 0.1, "10年期国债收益率": 2.40},
+    {"period": "2026-04", "M2同比": 7.1, "CPI同比": 0.2, "10年期国债收益率": 2.38},
+    {"period": "2026-05", "M2同比": 7.0, "CPI同比": 0.3, "10年期国债收益率": 2.35}
+  ]
+}

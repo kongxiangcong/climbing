@@ -13,7 +13,9 @@ import pytest
 
 from src.common.config import settings
 from src.common.models import (
+    CapitalFlowSnapshot,
     DailyReviewSnapshot,
+    MacroReportSnapshot,
     MarketSnapshot,
     PlanReviewSnapshot,
     PortfolioSnapshot,
@@ -535,3 +537,69 @@ def test_update_securities_reports_unrecognized_for_confirmation() -> None:
         assert "NOTATICKER" in data.get("unrecognized_tickers", [])
     finally:
         tickers_path.write_text(original, encoding="utf-8")
+
+
+def test_update_monthly_generates_capital_flow_and_macro_report_snapshots() -> None:
+    data = _run("update", "monthly", "--mock")
+    assert data["success"] is True
+    snapshots = {s["report_type"]: s for s in data["snapshots"]}
+    assert "capital_flow" in snapshots
+    assert "macro_report" in snapshots
+
+    cf_path = Path(snapshots["capital_flow"]["snapshot_path"])
+    cf = read_snapshot(cf_path, CapitalFlowSnapshot)
+    assert cf.report_type == "capital_flow"
+    assert cf.report_month
+    assert len(cf.indicators) >= 4
+
+    categories = {ind.category for ind in cf.indicators}
+    assert categories == {"growth", "inflation", "liquidity", "market_structure"}
+
+    for ind in cf.indicators:
+        assert ind.metadata.source
+        assert ind.metadata.retrieved_at is not None
+        assert ind.metadata.tier is not None
+
+    assert len(cf.assessments) == 4
+    assert {a.question_id for a in cf.assessments} == {"Q1", "Q2", "Q3", "Q4"}
+    for a in cf.assessments:
+        assert a.label in {"overheated", "neutral", "cool"}
+
+    macro_path = Path(snapshots["macro_report"]["snapshot_path"])
+    macro = read_snapshot(macro_path, MacroReportSnapshot)
+    assert macro.report_type == "macro_report"
+    assert macro.summary
+    assert len(macro.four_questions) == 4
+    assert macro.capital_flow_snapshot_id == cf.snapshot_id
+
+    web_json = settings.project_root / "web" / "public" / "macro-report.json"
+    assert web_json.exists()
+    loaded = json.loads(web_json.read_text(encoding="utf-8"))
+    assert "report_month" in loaded
+    assert len(loaded["indicators"]) >= 4
+    assert "four_questions" in loaded
+    assert loaded["authority_tier"] is not None
+
+
+def test_analyze_macro_mock_generates_macro_report() -> None:
+    data = _run("analyze", "macro", "--mock")
+    assert data["success"] is True
+    snapshot_path = Path(data["snapshot_path"])
+    report = read_snapshot(snapshot_path, MacroReportSnapshot)
+    assert report.report_type == "macro_report"
+    assert report.summary
+    assert len(report.four_questions) == 4
+    assert report.capital_flow_snapshot_id
+    assert report.outlook
+
+
+def test_macro_report_web_json_exists_after_update() -> None:
+    _run("update", "monthly", "--mock")
+    web_json = settings.project_root / "web" / "public" / "macro-report.json"
+    assert web_json.exists()
+    loaded = json.loads(web_json.read_text(encoding="utf-8"))
+    assert "growth_label" in loaded
+    assert "inflation_label" in loaded
+    assert "liquidity_label" in loaded
+    assert "market_structure_label" in loaded
+    assert loaded["report_month"]

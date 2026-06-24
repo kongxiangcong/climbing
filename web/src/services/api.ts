@@ -207,6 +207,49 @@ export interface ResearchSnapshot {
   references: Array<{ title: string; url?: string; source?: string; tier?: number }>
 }
 
+export interface MacroIndicator {
+  name: string
+  value: number | string
+  unit: string
+  period: string
+  yoy_change: number | null
+  mom_change: number | null
+  category: 'growth' | 'inflation' | 'liquidity' | 'market_structure'
+  metadata: {
+    source: string
+    retrieved_at: string
+    tier: number | null
+    authority_tier?: number | null
+  }
+}
+
+export interface CapitalFlowAssessment {
+  question_id: 'Q1' | 'Q2' | 'Q3' | 'Q4'
+  question: string
+  answer: string
+  evidence: string[]
+  label: 'overheated' | 'neutral' | 'cool'
+}
+
+export interface MacroReportData {
+  report_month: string
+  version: string
+  last_snapshot_at: string
+  source: string
+  retrieved_at: string
+  authority_tier: number | null
+  indicators: MacroIndicator[]
+  indicator_history?: Array<Record<string, number | string>>
+  four_questions: CapitalFlowAssessment[]
+  growth_label: 'overheated' | 'neutral' | 'cool'
+  inflation_label: 'overheated' | 'neutral' | 'cool'
+  liquidity_label: 'overheated' | 'neutral' | 'cool'
+  market_structure_label: 'overheated' | 'neutral' | 'cool'
+  summary?: string
+  outlook?: string
+  risks?: string[]
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 export async function fetchSecurityMaster(): Promise<SecurityMasterItem[]> {
@@ -340,10 +383,20 @@ export async function fetchDailyReviewSummary(): Promise<DailyReviewSummary | nu
   }
 }
 
-export async function fetchMacroReport() {
-  const res = await fetch(`${API_BASE}/reports/macro/latest`)
-  if (!res.ok) throw new Error('Failed to fetch macro report')
-  return res.json()
+export async function fetchMacroReport(): Promise<MacroReportData | null> {
+  try {
+    const res = await fetch(`${API_BASE}/reports/macro/latest`)
+    if (res.ok) return res.json()
+  } catch {
+    // fallthrough to static JSON
+  }
+  try {
+    const res = await fetch('/macro-report.json')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
 
 export interface MarketSummary {

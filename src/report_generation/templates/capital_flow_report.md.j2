@@ -1,0 +1,59 @@
+# 宏观月报
+
+> 报告月份：{{ report_month }}
+> 版本：{{ version }}
+> 生成时间：{{ created_at }}
+
+## 一、四因子标签
+
+| 维度 | 标签 |
+|------|------|
+| 增长 (Growth) | {{ growth_label }} |
+| 通胀 (Inflation) | {{ inflation_label }} |
+| 流动性 (Liquidity) | {{ liquidity_label }} |
+| 市场结构 (Market Structure) | {{ market_structure_label }} |
+
+## 二、关键指标
+
+| 指标 | 数值 | 单位 | 同比变化 | 数据来源 | 权威层级 |
+|------|------|------|----------|----------|----------|
+{% for ind in indicators %}
+| {{ ind.name }} | {{ ind.value }} | {{ ind.unit }} | {{ ind.yoy_change if ind.yoy_change is not none else '-' }} | {{ ind.metadata.source }} | T{{ ind.metadata.tier }} |
+{% endfor %}
+
+## 三、资金面四问
+
+{% for a in assessments %}
+### {{ a.question_id }}：{{ a.question }}
+
+- **判断**：{{ a.label }}
+- **回答**：{{ a.answer }}
+- **证据**：{{ a.evidence | join('、') if a.evidence else '-' }}
+
+{% endfor %}
+
+{% if macro_report %}
+## 四、综合判断
+
+{{ macro_report.summary }}
+
+## 五、展望
+
+{{ macro_report.outlook }}
+
+{% if macro_report.risks %}
+## 六、风险提示
+
+{% for risk in macro_report.risks %}
+- {{ risk }}
+{% endfor %}
+{% endif %}
+
+{% if macro_report.recommendations %}
+## 七、策略建议
+
+{% for rec in macro_report.recommendations %}
+- {{ rec }}
+{% endfor %}
+{% endif %}
+{% endif %}

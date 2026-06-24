@@ -8,7 +8,7 @@ import tempfile
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import typer
 
@@ -18,9 +18,12 @@ from src.cli.portfolio import build_portfolio_snapshot
 from src.common.config import settings
 from src.common.logger import get_logger
 from src.common.models import (
+    CapitalFlowAssessment,
+    CapitalFlowSnapshot,
     DailyReviewSnapshot,
     DeviationAlert,
     IndexMetric,
+    MacroReportSnapshot,
     MarketSnapshot,
     PortfolioSnapshot,
     ResearchAlert,
@@ -520,18 +523,251 @@ def daily_update(
 
 
 @app.command("monthly")
-def monthly_update(ctx: typer.Context) -> None:
-    """月更任务：宏观报告、市场温度。"""
-    tasks = settings.get("update_schedule.monthly.tasks", [])
-    logger.info("Starting monthly update: %s", tasks)
-    for task in tasks:
-        logger.info("Executing task: %s", task)
+def monthly_update(
+    ctx: typer.Context,
+    mock: bool = typer.Option(
+        False,
+        "--mock",
+        help="使用 mock skill 输出（测试用）",
+        envvar="CLIMBING_MOCK_SKILL",
+    ),
+    report_month: str | None = typer.Option(
+        None,
+        "--month",
+        help="报告月份，格式 YYYY-MM；默认上月",
+    ),
+) -> None:
+    """月更任务：生成宏观资金流事实快照与宏观月报叙事快照。"""
+    logger.info("Starting monthly update (mock=%s, month=%s)", mock, report_month)
+
+    try:
+        cf_path, cf_snapshot = _capital_flow_snapshot(report_month=report_month)
+    except Exception as exc:
+        logger.error("Capital flow standardization failed: %s", exc)
+        format_result(
+            ctx,
+            success=False,
+            message=f"宏观事实表生成失败：{exc}",
+        )
+        raise typer.Exit(code=1) from exc
+
+    try:
+        macro_path, macro_version = _macro_report_snapshot(
+            capital_flow=cf_snapshot, mock=mock
+        )
+    except Exception as exc:
+        logger.error("Macro report generation failed: %s", exc)
+        format_result(
+            ctx,
+            success=False,
+            message=f"宏观月报生成失败：{exc}",
+        )
+        raise typer.Exit(code=1) from exc
+
+    _write_macro_report_web_summary(cf_snapshot)
+
+    snapshots: list[dict[str, Any]] = [
+        {
+            "report_type": "capital_flow",
+            "snapshot_path": str(cf_path),
+            "version": cf_snapshot.version,
+        },
+        {
+            "report_type": "macro_report",
+            "snapshot_path": str(macro_path),
+            "version": macro_version,
+        },
+    ]
+    _write_system_status(snapshots)
     format_result(
         ctx,
         success=True,
-        message="Monthly update completed (placeholder).",
-        extra={"tasks": tasks},
+        message="Monthly update completed.",
+        extra={"snapshots": snapshots},
     )
+
+
+def _capital_flow_snapshot(
+    report_month: str | None = None,
+) -> tuple[Path, CapitalFlowSnapshot]:
+    """生成宏观资金流事实快照。"""
+    from src.data_standardization.capital_flow import CapitalFlowStandardizer
+
+    standardizer = CapitalFlowStandardizer()
+    snapshot = standardizer.build_snapshot(report_month=report_month)
+    path = write_snapshot(snapshot, "capital_flow")
+    return path, snapshot
+
+
+def _run_mock_capital_flow(context: dict[str, Any]) -> dict[str, Any]:
+    """调用 skills/capital-flow/scripts/mock_capital_flow.py 离线生成月报草案。"""
+    script = settings.project_root / "skills" / "capital-flow" / "scripts" / "mock_capital_flow.py"
+    if not script.exists():
+        logger.warning("capital-flow mock script not found, using fixture fallback")
+        return _load_fixture("capital_flow.json")
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as tmp:
+        tmp.write(json.dumps(context, ensure_ascii=False, indent=2))
+        tmp_path = Path(tmp.name)
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(script), str(tmp_path)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if proc.returncode != 0:
+            logger.warning("capital-flow mock script failed: %s", proc.stderr)
+            return _load_fixture("capital_flow.json")
+        return cast(dict[str, Any], json.loads(proc.stdout))
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Failed to run capital-flow mock script: %s", exc)
+        return _load_fixture("capital_flow.json")
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+def _run_capital_flow_skill(
+    context: dict[str, Any],
+    mock: bool,
+) -> dict[str, Any] | None:
+    """调用 capital-flow skill 或 mock 生成月报叙事草案。"""
+    if mock or shutil.which("kimi") is None:
+        if not mock:
+            logger.warning("Kimi CLI not found, falling back to mock mode")
+        return _run_mock_capital_flow(context)
+
+    from src.common.skill_runner import run_skill
+
+    result = run_skill(
+        prompt="请基于以下宏观事实生成资金面四问月报",
+        skill_name="capital-flow",
+        context=context,
+        timeout=120,
+    )
+    if not result.get("success"):
+        logger.error("capital-flow skill failed: %s", result.get("stderr", ""))
+        return None
+
+    parsed = result.get("parsed_output")
+    if isinstance(parsed, list) and parsed:
+        return cast(dict[str, Any], parsed[-1])
+    if isinstance(parsed, dict):
+        return parsed
+
+    stdout = result.get("stdout", "") or ""
+    if stdout.strip():
+        try:
+            return cast(dict[str, Any], json.loads(stdout.strip().splitlines()[-1]))
+        except json.JSONDecodeError:
+            logger.warning("Failed to parse capital-flow skill stdout as JSON")
+    return None
+
+
+def _macro_report_snapshot(
+    capital_flow: CapitalFlowSnapshot,
+    mock: bool,
+) -> tuple[Path, str]:
+    """生成宏观月报叙事快照。"""
+    from src.report_generation.capital_flow_report import CapitalFlowReportGenerator
+
+    context = capital_flow.model_dump(mode="json")
+    draft = _run_capital_flow_skill(context, mock=mock)
+
+    if draft is None:
+        draft = {}
+
+    summary = draft.get("summary") or (
+        f"{capital_flow.report_month} 宏观月报占位：增长 {capital_flow.growth_label}，"
+        f"通胀 {capital_flow.inflation_label}，流动性 {capital_flow.liquidity_label}，"
+        f"市场结构 {capital_flow.market_structure_label}。"
+    )
+    outlook = draft.get("outlook") or "请补充展望。"
+    risks = draft.get("risks") or []
+    recommendations = draft.get("recommendations") or []
+
+    four_questions_raw = draft.get("four_questions")
+    if four_questions_raw:
+        four_questions = [
+            CapitalFlowAssessment.model_validate(q) for q in four_questions_raw
+        ]
+    else:
+        four_questions = capital_flow.assessments
+
+    version_data = {
+        "report_month": capital_flow.report_month,
+        "capital_flow_snapshot_id": capital_flow.snapshot_id,
+        "summary": summary,
+        "four_questions": [q.model_dump(mode="json") for q in four_questions],
+    }
+    version = generate_version(version_data)
+
+    snapshot = MacroReportSnapshot(
+        snapshot_id=f"macro-report-{version}",
+        version=version,
+        report_month=capital_flow.report_month,
+        capital_flow_snapshot_id=capital_flow.snapshot_id,
+        summary=summary,
+        four_questions=four_questions,
+        outlook=outlook,
+        risks=risks,
+        recommendations=recommendations,
+        metadata=SourceMetadata(
+            source="climbing.update.macro_report",
+            retrieved_at=datetime.now(),
+            version="1.0.0",
+            tier=1,
+        ),
+    )
+    path = write_snapshot(snapshot, "macro_report")
+
+    generator = CapitalFlowReportGenerator()
+    report_md = generator.generate(capital_flow=capital_flow, macro_report=snapshot)
+    md_path = get_data_dir("reports") / "macro" / f"{version}.md"
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+    md_path.write_text(report_md, encoding="utf-8")
+    logger.info("Wrote macro report markdown -> %s", md_path)
+
+    return path, version
+
+
+def _write_macro_report_web_summary(snapshot: CapitalFlowSnapshot) -> Path:
+    """将最新宏观月报摘要写入 web/public，供前端静态读取。"""
+    web_public = settings.project_root / "web" / "public"
+    web_public.mkdir(parents=True, exist_ok=True)
+    web_path = web_public / "macro-report.json"
+
+    raw = snapshot.model_dump(mode="json")
+    # 把 tier 同时暴露为 authority_tier，便于前端展示
+    for ind in raw.get("indicators", []):
+        meta = ind.get("metadata", {})
+        meta["authority_tier"] = meta.get("tier")
+
+    # 提供图表可用的时间序列（ fixture 中可能包含）
+    fixture = _load_fixture("capital_flow.json")
+    indicator_history = fixture.get("indicator_history", [])
+
+    summary = {
+        "report_month": snapshot.report_month,
+        "last_snapshot_at": snapshot.created_at.isoformat(),
+        "version": snapshot.version,
+        "source": snapshot.metadata.source,
+        "retrieved_at": snapshot.metadata.retrieved_at.isoformat(),
+        "authority_tier": snapshot.metadata.tier,
+        "indicators": raw.get("indicators", []),
+        "indicator_history": indicator_history,
+        "four_questions": [a.model_dump(mode="json") for a in snapshot.assessments],
+        "growth_label": snapshot.growth_label,
+        "inflation_label": snapshot.inflation_label,
+        "liquidity_label": snapshot.liquidity_label,
+        "market_structure_label": snapshot.market_structure_label,
+    }
+    web_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    logger.info("Wrote macro report summary for web -> %s", web_path)
+    return web_path
 
 
 @app.command("daily-review")
