@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
+import type { ReactNode } from 'react'
 
 interface LayoutProps {
-  children: React.ReactNode
+  children: ReactNode
 }
 
 function Layout({ children }: LayoutProps) {

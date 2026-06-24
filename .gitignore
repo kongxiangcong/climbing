@@ -48,6 +48,8 @@ data/user/*
 
 # Verification samples are kept in git by default, but new raw API dumps are ignored
 data/raw/verification/*.csv
+# Ad-hoc local market data exports
+data/*.csv
 
 # Logs
 *.log
@@ -58,6 +60,7 @@ web/node_modules/
 web/dist/
 web/.cache/
 web/*.local
+web/*_close_summary.json
 web/public/system-status.json
 web/public/security-master.json
 web/public/market-summary.json
