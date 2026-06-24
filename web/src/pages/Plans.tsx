@@ -27,13 +27,12 @@ const deviationBg: Record<string, string> = {
 
 function Plans() {
   const [plans, setPlans] = useState<PlanSummary[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null)
   const [showDeviatedOnly, setShowDeviatedOnly] = useState(false)
 
   useEffect(() => {
-    setLoading(true)
     fetchPlans()
       .then((data) => {
         setPlans(data.plans || [])

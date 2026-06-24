@@ -285,6 +285,34 @@ export interface PlansSummary {
   plans: PlanSummary[]
 }
 
+export interface DeviationAlert {
+  plan_id: string
+  reason: string
+  severity: string
+}
+
+export interface ResearchAlert {
+  ticker: string
+  reason: string
+}
+
+export interface DailyReviewSummary {
+  last_snapshot_at: string
+  version: string
+  trade_date: string
+  highlights: string[]
+  sentiment: string
+  portfolio_risk: Record<string, unknown>
+  plan_deviations: DeviationAlert[]
+  stale_research: ResearchAlert[]
+  watchlist: string[]
+  pending_counts: {
+    stocks_needing_review: number
+    plan_deviations: number
+    expired_research: number
+  }
+}
+
 export async function fetchPlans(): Promise<PlansSummary> {
   // 开发环境若无后端，回退读取 CLI 写入的静态 plans.json
   try {
@@ -299,6 +327,16 @@ export async function fetchPlans(): Promise<PlansSummary> {
     return res.json()
   } catch {
     throw new Error('Failed to fetch plans')
+  }
+}
+
+export async function fetchDailyReviewSummary(): Promise<DailyReviewSummary | null> {
+  try {
+    const res = await fetch('/daily-review-summary.json')
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
   }
 }
 

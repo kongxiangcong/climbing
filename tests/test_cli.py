@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import subprocess
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +18,10 @@ from src.common.models import (
     PlanReviewSnapshot,
     PortfolioSnapshot,
     ResearchSnapshot,
+    SourceMetadata,
     TradePlan,
 )
-from src.common.snapshot_io import read_snapshot
+from src.common.snapshot_io import read_snapshot, write_snapshot
 
 PROJECT_ROOT = settings.project_root
 PYTHON = shutil.which("python") or "python"
@@ -45,20 +47,63 @@ def _run(*args: str) -> dict[str, Any]:
     return data
 
 
-def test_update_daily_generates_market_and_portfolio_snapshots() -> None:
-    data = _run("update", "daily")
+def _write_stale_research_snapshot(ticker: str, version: str, created_at: datetime) -> Path:
+    """在 equity 目录下写入一份过期的 ResearchSnapshot，用于每日复盘 stale 检测。"""
+    snapshot = ResearchSnapshot(
+        snapshot_id=f"research-{ticker}-{version}",
+        report_type="research",
+        version=version,
+        ticker=ticker,
+        summary="stale snapshot for daily review test",
+        metadata=SourceMetadata(source="test", retrieved_at=created_at),
+        created_at=created_at,
+    )
+    return write_snapshot(snapshot, "equity", ticker)
+
+
+def test_update_daily_generates_market_portfolio_and_review_snapshots() -> None:
+    # 准备持仓流水
+    fixture_tx = PROJECT_ROOT / "tests" / "fixtures" / "transactions.csv"
+    _run("portfolio", "transactions", str(fixture_tx))
+
+    # 创建并激活一个 000725.SZ 交易计划，使其进入偏离检查范围
+    create_data = _run(
+        "plan",
+        "create",
+        "000725.SZ",
+        "--name",
+        "daily-review-test",
+        "--mock",
+        "--confirm",
+    )
+    assert create_data["success"] is True
+    plan_id = create_data["plan_id"]
+
+    # 写入一份过期的 000725.SZ 研报，触发 stale_research
+    stale_version = "20990101000000-stale"
+    _write_stale_research_snapshot(
+        "000725.SZ",
+        stale_version,
+        created_at=datetime.now() - timedelta(days=30),
+    )
+
+    data = _run("update", "daily", "--mock")
     assert data["success"] is True
     snapshots = {s["report_type"]: s for s in data["snapshots"]}
     assert "market" in snapshots
     assert "portfolio" in snapshots
+    assert "daily_review" in snapshots
 
-    # 命令输出为 JSON，包含两个 snapshot 的路径和版本
+    # 命令输出为 JSON，包含三个 snapshot 的路径和版本
     market_info = snapshots["market"]
     portfolio_info = snapshots["portfolio"]
+    review_info = snapshots["daily_review"]
     assert "snapshot_path" in market_info
     assert "version" in market_info
     assert "snapshot_path" in portfolio_info
     assert "version" in portfolio_info
+    assert "snapshot_path" in review_info
+    assert "version" in review_info
 
     market_path = Path(market_info["snapshot_path"])
     # MarketSnapshot 写入 data/reports/market/{version}/snapshot.json
@@ -84,6 +129,31 @@ def test_update_daily_generates_market_and_portfolio_snapshots() -> None:
         Path(portfolio_info["snapshot_path"]), PortfolioSnapshot
     )
     assert portfolio.report_type == "portfolio"
+
+    review = read_snapshot(Path(review_info["snapshot_path"]), DailyReviewSnapshot)
+    assert review.report_type == "daily_review"
+    assert review.trade_date == market.trade_date
+    assert review.highlights
+    assert review.sentiment
+    assert review.portfolio_risk
+    # PRD 要求至少包含三类待复核提示字段
+    assert isinstance(review.plan_deviations, list)
+    assert isinstance(review.stale_research, list)
+    assert isinstance(review.watchlist, list)
+
+    # 在已激活计划 + 过期研报的 fixture 下，应产生非空的偏离与过期提示
+    assert any(d.plan_id == plan_id for d in review.plan_deviations)
+    assert any(r.ticker == "000725.SZ" for r in review.stale_research)
+
+    # 复盘生成不应修改任何交易计划或持仓：计划版本应保持 v2，持仓标的数量不变
+    plan = TradePlan.model_validate_json(
+        (PROJECT_ROOT / "data" / "user" / "plans" / f"{plan_id}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert plan.status.value == "active"
+    assert plan.plan_version == "2"
+    assert len(portfolio.positions) > 0
 
 
 def test_update_daily_fails_gracefully_when_market_fixture_missing(

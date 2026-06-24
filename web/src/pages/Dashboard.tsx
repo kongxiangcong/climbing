@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import DataCard from '../components/DataCard'
 import {
+  fetchDailyReviewSummary,
   fetchMarketSummary,
   fetchSecurityMaster,
   fetchSystemStatus,
+  type DailyReviewSummary,
   type MarketSummary,
   type SecurityMasterItem,
   type SystemStatus,
@@ -25,15 +27,33 @@ function formatTurnover(value: string | null): string {
   return `${num.toFixed(2)}`
 }
 
+function formatReviewNote(summary: DailyReviewSummary | null): string {
+  if (!summary) return '运行日更后生成'
+  const { pending_counts } = summary
+  const parts: string[] = []
+  if (pending_counts.stocks_needing_review > 0) {
+    parts.push(`需复核 ${pending_counts.stocks_needing_review} 只`)
+  }
+  if (pending_counts.plan_deviations > 0) {
+    parts.push(`偏离计划 ${pending_counts.plan_deviations} 条`)
+  }
+  if (pending_counts.expired_research > 0) {
+    parts.push(`过期研究 ${pending_counts.expired_research} 条`)
+  }
+  return parts.length > 0 ? parts.join(' · ') : '暂无待复核事项'
+}
+
 function Dashboard() {
   const [status, setStatus] = useState<SystemStatus | null>(null)
   const [securities, setSecurities] = useState<SecurityMasterItem[]>([])
   const [marketSummary, setMarketSummary] = useState<MarketSummary | null>(null)
+  const [dailyReview, setDailyReview] = useState<DailyReviewSummary | null>(null)
 
   useEffect(() => {
     fetchSystemStatus().then(setStatus)
     fetchSecurityMaster().then(setSecurities)
     fetchMarketSummary().then(setMarketSummary)
+    fetchDailyReviewSummary().then(setDailyReview)
   }, [])
 
   const lastSnapshot = status
@@ -65,6 +85,9 @@ function Dashboard() {
     .filter(Boolean)
     .join(' · ')
 
+  const reviewNote = formatReviewNote(dailyReview)
+  const reviewHighlight = dailyReview?.highlights?.[0] ?? '暂无复盘摘要'
+
   return (
     <div>
       <h2 style={{ marginBottom: '16px' }}>总览</h2>
@@ -81,6 +104,11 @@ function Dashboard() {
           title="市场概况"
           value={marketSummary?.trade_date ?? '-'}
           note={marketNote}
+        />
+        <DataCard
+          title="今日复盘"
+          value={dailyReview?.sentiment ?? '-'}
+          note={`${reviewHighlight} | ${reviewNote}`}
         />
       </div>
     </div>

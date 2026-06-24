@@ -9,6 +9,19 @@
     "level": "low",
     "concentration": "单一标的占比未超限"
   },
+  "plan_deviations": [
+    {
+      "plan_id": "000725.SZ-test",
+      "reason": "mock: 价格触发目标区间上限",
+      "severity": "severe"
+    }
+  ],
+  "stale_research": [
+    {
+      "ticker": "000725.SZ",
+      "reason": "mock: 研报过期"
+    }
+  ],
   "watchlist": [
     "000725.SZ",
     "600519.SH"
